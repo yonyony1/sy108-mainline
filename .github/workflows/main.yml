@@ -16,7 +16,7 @@ env:
 
 jobs:
   build-openwrt:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
       - name: Checkout main repo
@@ -84,7 +84,7 @@ jobs:
   # 独立Job：Docker内编译 uboot-spl + 离线仿真校验
   build-uboot-spl:
     needs: build-openwrt
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - name: Checkout main repo again
