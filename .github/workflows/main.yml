@@ -42,7 +42,7 @@ jobs:
             build-essential flex bison git libssl-dev libelf-dev \
             ncurses-dev python3 python3-pip python3-venv \
             unzip wget rsync file ccache swig \
-            qemu-user
+            qemu-user jq
           python3 -m pip install --upgrade pip
 
       - name: Prepare Python environment
@@ -66,6 +66,15 @@ jobs:
         if: inputs.rebuild_all
         run: |
           rm -rf ${{ env.OUT_DIR }}
+
+      - name: Prepare kernel working dir
+        run: |
+          mkdir -p ${{ env.OUT_DIR }}/linux
+          KERNEL_REPO=$(jq -r '.repo' manifests/kernel.json)
+          if [ ! -d "${{ env.OUT_DIR }}/linux/.git" ]; then
+            git clone --depth=1 "$KERNEL_REPO" ${{ env.OUT_DIR }}/linux
+          fi
+        working-directory: ${{ env.REPO_MAIN }}
 
       - name: Auto Refresh Kernel Hash (Fix Checksum Mismatch)
         run: |
