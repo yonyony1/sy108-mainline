@@ -146,9 +146,9 @@ static int infer_band(bool nr, int64_t arfcn)
 					 {2750, 3449, 7},    {3450, 3799, 8},	 {6150, 6449, 20},
 					 {9210, 9659, 28},   {37750, 38249, 38}, {38250, 38649, 39},
 					 {38650, 39649, 40}, {39650, 41589, 41}};
-	static const int64_t nr_ranges[][3] = {{422000, 434000, 1},  {361000, 376000, 3},
-					       {185000, 192000, 8},  {151600, 160600, 28},
-					       {499200, 537999, 41}, {693334, 733333, 79}};
+	static const int64_t nr_ranges[][3] = {
+	    {422000, 434000, 1},  {361000, 376000, 3},	{173800, 178800, 5}, {185000, 192000, 8},
+	    {151600, 160600, 28}, {499200, 537999, 41}, {693334, 733333, 79}};
 	const int64_t (*ranges)[3] = nr ? nr_ranges : lte;
 	size_t n = nr ? sizeof(nr_ranges) / sizeof(*nr_ranges) : sizeof(lte) / sizeof(*lte);
 	for (size_t i = 0; i < n; i++)
@@ -219,6 +219,8 @@ J *decode_cells(const char *raw, const char *rat, bool serving)
 		    v[2] > (nr ? 1007 : 503))
 			goto invalid;
 		int band = v[0] ? (int)v[0] : infer_band(nr, v[1]);
+		if (!band && nr && v[1] > 653333 && v[1] <= 680000)
+			band = 77;
 		J *row = json_object_new_object();
 		string(row, "rat", rat);
 		boolean(row, "serving", serving);
@@ -232,7 +234,8 @@ J *decode_cells(const char *raw, const char *rat, bool serving)
 		J *candidates = json_object_new_array();
 		if (!band && nr && v[1] >= 620000 && v[1] <= 680000) {
 			json_object_array_add(candidates, json_object_new_string("n77"));
-			json_object_array_add(candidates, json_object_new_string("n78"));
+			if (v[1] <= 653333)
+				json_object_array_add(candidates, json_object_new_string("n78"));
 		}
 		json_object_object_add(row, "band_candidates", candidates);
 		integer(row, "arfcn", v[1]);
@@ -333,16 +336,10 @@ J *info_execute(struct controller *c, const char *operation)
 				selected = row;
 			}
 		}
-		int64_t qci, down, up;
-		bool valid =
-		    selected && json_object_array_length(selected) >= 8 &&
-		    integer_text(json_object_get_string(json_object_array_get_idx(selected, 1)), 0,
-				 255, &qci) &&
-		    integer_text(json_object_get_string(json_object_array_get_idx(selected, 6)), 0,
-				 UINT32_MAX, &down) &&
-		    integer_text(json_object_get_string(json_object_array_get_idx(selected, 7)), 0,
-				 UINT32_MAX, &up);
-		if (!valid) {
+		int64_t qci;
+		if (!selected || json_object_array_length(selected) < 2 ||
+		    !integer_text(json_object_get_string(json_object_array_get_idx(selected, 1)), 0,
+				  255, &qci)) {
 			json_object_put(rows);
 			errorf(CELL_INVALID, "No valid CID 1 negotiated QoS response");
 			return NULL;
@@ -350,8 +347,28 @@ J *info_execute(struct controller *c, const char *operation)
 		J *qos = json_object_new_object();
 		integer(qos, "cid", 1);
 		integer(qos, "qci", qci);
-		integer(qos, "downlink_kbps", down);
-		integer(qos, "uplink_kbps", up);
+		const char *rates[] = {"gbr_downlink_kbps",  "gbr_uplink_kbps",
+				       "mbr_downlink_kbps",  "mbr_uplink_kbps",
+				       "ambr_downlink_kbps", "ambr_uplink_kbps"};
+		for (size_t i = 0; i < 6; i++) {
+			const char *field =
+			    json_object_get_string(json_object_array_get_idx(selected, i + 2));
+			int64_t rate;
+			if (field && *field) {
+				if (!integer_text(field, 0, UINT32_MAX, &rate)) {
+					json_object_put(qos);
+					json_object_put(rows);
+					errorf(CELL_INVALID, "Invalid negotiated QoS rate");
+					return NULL;
+				}
+				integer(qos, rates[i], rate);
+			} else
+				json_object_object_add(qos, rates[i], NULL);
+		}
+		json_object_object_add(qos, "downlink_kbps",
+				       json_object_get(get(qos, "ambr_downlink_kbps")));
+		json_object_object_add(qos, "uplink_kbps",
+				       json_object_get(get(qos, "ambr_uplink_kbps")));
 		real(qos, "uptime", mono());
 		json_object_object_add(c->status, "qos", json_object_get(qos));
 		json_object_put(rows);
@@ -406,6 +423,14 @@ J *info_execute(struct controller *c, const char *operation)
 				}
 				for (size_t j = 0; j < json_object_array_length(rows); j++) {
 					J *sample = json_object_array_get_idx(rows, j);
+					if (!(i % 2)) {
+						J *reg = get(c->status, i < 2 ? "registration"
+									      : "nr_registration");
+						string(sample, "tac", str(reg, "tac"));
+						string(sample, "cell_id", str(reg, "cell_id"));
+						json_object_object_add(sample, "bandwidth_mhz",
+								       NULL);
+					}
 					real(sample, "sample_uptime", mono());
 					json_object_array_add(cells, json_object_get(sample));
 				}

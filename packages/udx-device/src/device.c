@@ -1,5 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only Typed rpcd adapter; never opens an AT device. */
+/* SPDX-License-Identifier: GPL-2.0-only Typed rpcd adapter; never opens an AT
+ * device. */
 #include "common.h"
+#include "frequency.h"
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
@@ -11,7 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
@@ -48,10 +49,24 @@ static const char *cellular_allowed[] = {"status",
 					 "sms_delete_history",
 					 "radio_options",
 					 "nr_capability",
-					 "physical_slot"};
+					 "sms_delete_batch",
+					 "physical_slot",
+					 "operation_status",
+					 "network_configure",
+					 "operator_catalog",
+					 "operators_scan",
+					 "operator_auto",
+					 "operator_select",
+					 "imei_read",
+					 "imei_write"};
 static const char *method_description =
-    "{\"status\":{},\"sms_status\":{},\"apn_status\":{},\"sms_history_status\":{},\"sms_receipt\":{"
-    "\"request_id\":\"\"},\"cellular\":{\"operation\":\"\",\"arguments\":{}},\"usb\":{\"profile\":"
+    "{\"frequency_status\":{},\"frequency_apply\":{\"cpu_governor\":\"\",\"cpu_min_khz\":0,\"cpu_"
+    "max_khz\":0,\"ddr_governor\":\"\",\"ddr_frequency_hz\":0},"
+    "\"status\":{},\"sms_status\":{},\"apn_"
+    "status\":{},\"sms_history_status\":"
+    "{},\"sms_receipt\":{"
+    "\"request_id\":\"\"},\"cellular\":{\"operation\":\"\",\"arguments\":{}},"
+    "\"usb\":{\"profile\":"
     "\"\",\"acm\":false}}";
 static char *read_file(const char *name, size_t maximum)
 {
@@ -275,6 +290,7 @@ static J *sysfs_array(const char *pattern, int kind)
 			continue;
 		J *row = json_object_new_object();
 		if (kind == 0) {
+			string(row, "id", name);
 			child_path(sub, path, "type");
 			text_file(row, "name", sub);
 			child_path(sub, path, "temp");
@@ -319,6 +335,10 @@ static J *sysfs_array(const char *pattern, int kind)
 			number_file(row, "current_khz", sub, 1);
 			child_path(sub, path, "scaling_governor");
 			text_file(row, "governor", sub);
+			child_path(sub, path, "scaling_min_freq");
+			number_file(row, "min_khz", sub, 1);
+			child_path(sub, path, "scaling_max_freq");
+			number_file(row, "max_khz", sub, 1);
 		}
 		json_object_array_add(out, row);
 	}
@@ -546,6 +566,10 @@ static J *dispatch(const char *method, J *args)
 		errorf(CELL_INVALID, "Unknown method or fields");
 		return NULL;
 	}
+	if (!strcmp(method, "frequency_status"))
+		return frequency_status();
+	if (!strcmp(method, "frequency_apply"))
+		return frequency_apply(args, true);
 	if (!strcmp(method, "status"))
 		return status();
 	if (!strcmp(method, "sms_status"))
@@ -565,6 +589,8 @@ static J *dispatch(const char *method, J *args)
 int main(int argc, char **argv)
 {
 	signal(SIGPIPE, SIG_IGN);
+	if (argc == 2 && !strcmp(argv[1], "apply-frequency"))
+		return frequency_restore();
 	if (argc == 2 && !strcmp(argv[1], "list")) {
 		puts(method_description);
 		return 0;

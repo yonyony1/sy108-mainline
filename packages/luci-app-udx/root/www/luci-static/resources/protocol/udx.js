@@ -33,7 +33,7 @@ return network.registerProtocol('udx', {
                                      _('Cellular settings'));
         info.rawhtml = true;
         info.cfgvalue = function() {
-            return E('a', {href : L.url('admin', 'udx', 'baseband')}, _('Open network management'));
+            return E('a', {href : L.url('admin', 'udx', 'overview')}, _('Open network management'));
         };
         info.description = _(
             'The modem supplies the IP configuration. Manage the APN and radio settings in UDX710; netifd manages this network interface.');

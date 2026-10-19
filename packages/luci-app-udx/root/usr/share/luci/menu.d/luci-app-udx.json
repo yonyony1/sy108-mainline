@@ -1,6 +1,6 @@
 {
  "admin/udx": {
-  "title": "UDX710",
+  "title": "SY108",
   "order": 35,
   "action": {
    "type": "firstchild"
@@ -12,75 +12,43 @@
   }
  },
  "admin/udx/overview": {
-  "title": "System monitor",
+  "title": "Overview and network control",
   "order": 10,
   "action": {
    "type": "view",
    "path": "udx/overview"
   }
  },
- "admin/udx/usb": {
-  "order": 20,
-  "action": {
-   "type": "view",
-   "path": "udx/usb"
-  },
-  "firstchild_ineligible": true
- },
- "admin/udx/boot": {
-  "order": 30,
-  "action": {
-   "type": "view",
-   "path": "udx/boot"
-  },
-  "firstchild_ineligible": true
- },
- "admin/udx/sensors": {
-  "order": 40,
-  "action": {
-   "type": "view",
-   "path": "udx/sensors"
-  },
-  "firstchild_ineligible": true
- },
- "admin/udx/sms": {
-  "title": "SMS management",
-  "order": 40,
-  "action": {
-   "type": "view",
-   "path": "udx/sms"
-  }
- },
  "admin/udx/cellular": {
-  "title": "Advanced network",
-  "order": 30,
+  "title": "Bands, cells and APN",
+  "order": 20,
   "action": {
    "type": "view",
    "path": "udx/cellular"
   }
  },
- "admin/udx/apn": {
-  "title": "APN settings",
-  "order": 60,
+ "admin/udx/sms": {
+  "title": "SMS management",
+  "order": 30,
   "action": {
    "type": "view",
-   "path": "udx/apn"
-  }
- },
- "admin/udx/baseband": {
-  "title": "Network management",
-  "order": 20,
-  "action": {
-   "type": "view",
-   "path": "udx/baseband"
+   "path": "udx/sms"
   }
  },
  "admin/udx/at": {
-  "title": "AT debugging",
-  "order": 50,
+  "title": "AT terminal and IMEI",
+  "order": 40,
   "action": {
    "type": "view",
    "path": "udx/at"
+  }
+ },
+ "admin/udx/hardware": {
+  "title": "Hardware and platform",
+  "order": 50,
+  "action": {
+   "type": "view",
+   "path": "udx/hardware"
   }
  }
 }

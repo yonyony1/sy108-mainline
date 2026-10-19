@@ -12,27 +12,9 @@ int debug_validate(J *args)
 	    !json_object_is_type(get(args, "timeout"), json_type_int) || seconds < 1 ||
 	    seconds > 120)
 		return errorf(CELL_INVALID, "Use one AT command and a timeout of 1 to 120 seconds");
-	char upper[257];
-	size_t used = 0;
-	bool quoted = false;
-	for (size_t i = 0; command[i]; i++) {
-		unsigned char ch = command[i];
-		if (ch < 32 || ch > 126 || ch == ';')
-			return errorf(CELL_INVALID,
-				      "AT debug accepts one printable command without separators");
-		if (ch == '"')
-			quoted = !quoted;
-		if (ch != ' ' || quoted)
-			upper[used++] = (char)toupper(ch);
-	}
-	upper[used] = 0;
-	const char *blocked[] = {
-	    "AT+SPIMEI=", "AT+SPNV", "AT+CMGS=", "AT+CMGW=", "AT+CGDATA=", "ATD",
-	    "ATO",	  "ATZ",     "AT&F",	 "ATQ",	     "ATV",	   "ATE"};
-	for (size_t i = 0; i < sizeof(blocked) / sizeof(*blocked); i++)
-		if (!strncmp(upper, blocked[i], strlen(blocked[i])))
-			return errorf(CELL_INVALID, "This command requires a dedicated operation; "
-						    "identity and AT framing changes are excluded");
+	for (size_t i = 0; command[i]; i++)
+		if ((unsigned char)command[i] < 32 || (unsigned char)command[i] > 126)
+			return errorf(CELL_INVALID, "AT command must be a printable single line");
 	return 0;
 }
 J *debug_execute(struct controller *c, J *args)

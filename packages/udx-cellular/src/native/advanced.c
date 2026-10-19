@@ -13,9 +13,9 @@ struct band {
 static const struct band lte[] = {{"B1", true, 1},    {"B3", true, 4},	   {"B5", true, 16},
 				  {"B8", true, 128},  {"B34", false, 2},   {"B38", false, 32},
 				  {"B39", false, 64}, {"B40", false, 128}, {"B41", false, 256}};
-static const struct band nr[] = {{"n1", true, 1},    {"n8", true, 128},	  {"n28", true, 512},
-				 {"n41", false, 16}, {"n77", false, 128}, {"n78", false, 256},
-				 {"n79", false, 512}};
+static const struct band nr[] = {{"n1", true, 1},     {"n3", true, 4},	   {"n5", true, 16},
+				 {"n8", true, 128},   {"n28", true, 512},  {"n41", false, 16},
+				 {"n77", false, 128}, {"n78", false, 256}, {"n79", false, 512}};
 static const char *modes[] = {"lte_only", "nr_only", "nr_lte", "nr_lte_wcdma_gsm"},
 		  *labels[] = {"LTE", "NR", "NR + LTE", "NR + LTE + WCDMA + GSM"};
 static const int mode_codes[] = {3, 128, 131, 134};
@@ -43,6 +43,19 @@ int advanced_validate(const char *op, J *args)
 			       text_equal(name, "nr_only") || text_equal(name, "nsa_only")
 			   ? 0
 			   : errorf(CELL_INVALID, "Unknown network preset");
+	}
+	if (!strcmp(op, "network_configure")) {
+		{
+			J *nrarg = json_object_new_object();
+			string(nrarg, "mode", str(args, "nr_capability"));
+			int rc = mode_validate("nr_capability", nrarg);
+			json_object_put(nrarg);
+			if (rc < 0)
+				return -1;
+		}
+		return mode_index(str(args, "mode")) >= 0
+			   ? 0
+			   : errorf(CELL_INVALID, "Unknown network mode");
 	}
 	if (!strcmp(op, "network_mode"))
 		return mode_index(str(args, "mode")) >= 0
@@ -78,11 +91,15 @@ int advanced_validate(const char *op, J *args)
 			return errorf(CELL_INVALID, "Invalid cell parameters");
 		return 0;
 	}
-	if (!strcmp(op, "unlock"))
+	if (!strcmp(op, "unlock")) {
+		if (text_equal(str(args, "scope"), "cells") &&
+		    !text_equal(str(args, "rat"), "lte") && !text_equal(str(args, "rat"), "nr"))
+			return errorf(CELL_INVALID, "Select LTE or NR to unlock cells");
 		return text_equal(str(args, "scope"), "bands") ||
 			       text_equal(str(args, "scope"), "cells")
 			   ? 0
 			   : errorf(CELL_INVALID, "Unknown unlock scope");
+	}
 	return !strcmp(op, "advanced_refresh") ? 0
 					       : errorf(CELL_INVALID, "Unknown advanced operation");
 }
@@ -98,9 +115,12 @@ static J *mask_object(uint32_t fdd0, uint32_t fdd1, uint32_t tdd0, uint32_t tdd1
 	json_object_object_add(out, "tdd", t);
 	return out;
 }
-static J *decode(struct controller *c, bool is_nr)
+static J *decode_mask(struct controller *c, bool is_nr, bool capability)
 {
-	J *row = controller_query(c, is_nr ? "AT+SPLBAND=3" : "AT+SPLBAND=0", 50, "+SPLBAND:");
+	J *row = controller_query(c,
+				  capability ? (is_nr ? "AT+SPLBAND=4" : "AT+SPLBAND=5")
+					     : (is_nr ? "AT+SPLBAND=3" : "AT+SPLBAND=0"),
+				  50, "+SPLBAND:");
 	if (!row)
 		return NULL;
 	size_t count = is_nr ? 4 : 5;
@@ -139,6 +159,73 @@ invalid:
 	json_object_put(row);
 	errorf(CELL_INVALID, "Invalid complete band mask");
 	return NULL;
+}
+static J *decode(struct controller *c, bool is_nr)
+{
+	J *selected = decode_mask(c, is_nr, false);
+	if (!selected)
+		return NULL;
+	J *cap = decode_mask(c, is_nr, true);
+	if (cap) {
+		bool full = !json_object_get_boolean(get(cap, "unrestricted")) &&
+			    json_object_equal(get(selected, "masks"), get(cap, "masks"));
+		if (full)
+			boolean(selected, "unrestricted", true);
+		json_object_object_add(selected, "supported_bands",
+				       json_object_get(get(cap, "bands")));
+		json_object_object_add(selected, "supported_masks",
+				       json_object_get(get(cap, "masks")));
+		json_object_put(cap);
+	} else if (c->transport.poisoned) {
+		json_object_put(selected);
+		return NULL;
+	} else
+		string(selected, "capability_error", cell_error);
+	return selected;
+}
+static bool mask_matches(J *actual, J *desired)
+{
+	if (json_object_equal(get(actual, "masks"), desired))
+		return true;
+	bool zero = true;
+	const char *names[] = {"fdd", "tdd"};
+	for (size_t i = 0; i < 2; i++)
+		for (size_t j = 0; j < 2; j++)
+			zero &= json_object_get_int64(
+				    json_object_array_get_idx(get(desired, names[i]), j)) == 0;
+	if (zero)
+		return json_object_get_boolean(get(actual, "unrestricted"));
+	return json_object_get_boolean(get(actual, "unrestricted")) &&
+	       json_object_equal(desired, get(actual, "supported_masks"));
+}
+static J *read_cell_lock(struct controller *c, const char *rat)
+{
+	int number = text_equal(rat, "nr") ? 16 : 12;
+	char wire[64];
+	snprintf(wire, sizeof(wire), "AT+SPFORCEFRQ=%d,3", number);
+	J *fields = controller_query(c, wire, 10, "+SPFORCEFRQ:");
+	if (!fields)
+		return NULL;
+	size_t n = json_object_array_length(fields);
+	int64_t values[4] = {0};
+	bool valid = n == 2 || n == 4;
+	for (size_t i = 0; valid && i < n; i++)
+		valid = integer_text(json_object_get_string(json_object_array_get_idx(fields, i)),
+				     0, UINT32_MAX, &values[i]);
+	json_object_put(fields);
+	if (!valid || values[0] != number || values[1] != 3 ||
+	    (n == 4 && values[3] > (number == 16 ? 1007 : 503))) {
+		errorf(CELL_INVALID, "Invalid cell-lock readback");
+		return NULL;
+	}
+	J *row = json_object_new_object();
+	string(row, "rat", rat);
+	boolean(row, "locked", n == 4);
+	if (n == 4) {
+		integer(row, "arfcn", values[2]);
+		integer(row, "pci", values[3]);
+	}
+	return row;
 }
 static J *read_bands(struct controller *c)
 {
@@ -247,7 +334,18 @@ static J *refresh(struct controller *c)
 	}
 	json_object_object_add(value, "band_choices", choices);
 	string(value, "band_choices_evidence", "device reference: udx710-tools advanced.c");
-	boolean(value, "cell_lock_readback_supported", false);
+	J *locks = json_object_new_object();
+	for (int r = 0; r < 2; r++) {
+		const char *rat = r ? "nr" : "lte";
+		J *lock = read_cell_lock(c, rat);
+		if (!lock) {
+			lock = json_object_new_object();
+			string(lock, "error", cell_error);
+		}
+		json_object_object_add(locks, rat, lock);
+	}
+	json_object_object_add(value, "cell_locks", locks);
+	boolean(value, "cell_lock_readback_supported", true);
 	boolean(value, "network_mode_write_supported", true);
 	J *available = json_object_new_object();
 	for (size_t i = 0; i < 4; i++) {
@@ -295,49 +393,35 @@ J *advanced_execute(struct controller *c, const char *op, J *args)
 		return NULL;
 	if (!strcmp(op, "advanced_refresh"))
 		return refresh(c);
-	if (!strcmp(op, "network_preset")) {
-		const char *name = str(args, "mode");
-		bool wanted = c->want_data;
-		c->want_data = false;
-		J *a = json_object_new_object(), *radio = NULL, *network = NULL, *out = NULL;
-		string(a, "mode",
-		       text_equal(name, "lte_only")  ? "lte_only"
-		       : text_equal(name, "nr_only") ? "nr_only"
-						     : "nr_lte");
-		network = advanced_execute(c, "network_mode", a);
-		if (network && !text_equal(name, "lte_only")) {
-			string(a, "mode", text_equal(name, "nsa_only") ? "nsa_only" : "sa_nsa");
-			radio = mode_execute(c, "nr_capability", a);
-		}
-		c->want_data = wanted;
-		if (network && (radio || text_equal(name, "lte_only"))) {
-			out = json_object_new_object();
-			string(out, "mode", name);
-			boolean(out, "readback_verified", true);
-			json_object_object_add(out, "network", json_object_get(network));
-			json_object_object_add(out, "nr_capability", json_object_get(radio));
-			if (wanted) {
-				J *connection = controller_connect(c, 10);
-				if (!connection) {
-					json_object_put(out);
-					out = NULL;
-				} else
-					json_object_object_add(out, "connection", connection);
-			}
-		}
-		json_object_put(network);
-		json_object_put(radio);
-		json_object_put(a);
-		return out;
-	}
-	bool wanted = c->want_data;
-	c->want_data = false;
+	struct radio_change change;
 	J *result = NULL, *desired = NULL, *after = NULL;
-	if (!strcmp(op, "network_mode")) {
-		if (advanced_set_mode(c, str(args, "mode"), &result) < 0)
+	if (radio_begin(c, &change) < 0)
+		goto end;
+	if (!strcmp(op, "network_mode") || !strcmp(op, "network_preset") ||
+	    !strcmp(op, "network_configure")) {
+		const char *mode = str(args, "mode"), *nrmode = str(args, "nr_capability");
+		if (!nrmode)
+			nrmode = str(c->config, "nr_capability");
+		if (!nrmode)
+			nrmode = "sa_nsa";
+		if (!strcmp(op, "network_preset")) {
+			nrmode = text_equal(mode, "nsa_only") ? "nsa_only" : "sa_nsa";
+			mode = text_equal(mode, "lte_only")  ? "lte_only"
+			       : text_equal(mode, "nr_only") ? "nr_only"
+							     : "nr_lte";
+		}
+		if (advanced_set_mode(c, mode, &result) < 0)
 			goto end;
+		J *cap = mode_set_nr(c, nrmode);
+		if (!cap) {
+			json_object_put(result);
+			result = NULL;
+			goto end;
+		}
+		json_object_object_add(result, "nr_capability", cap);
 		J *changes = json_object_new_object();
-		string(changes, "modem.network_mode", str(args, "mode"));
+		string(changes, "modem.network_mode", mode);
+		string(changes, "modem.nr_capability", nrmode);
 		int rc = uci_commit(changes, NULL);
 		json_object_put(changes);
 		if (rc < 0) {
@@ -345,15 +429,10 @@ J *advanced_execute(struct controller *c, const char *op, J *args)
 			result = NULL;
 			goto end;
 		}
-		string(c->config, "network_mode", str(args, "mode"));
+		string(c->config, "network_mode", mode);
+		string(c->config, "nr_capability", nrmode);
 		goto end;
 	}
-	J *disconnected = controller_disconnect(c, false);
-	if (!disconnected)
-		goto end;
-	json_object_put(disconnected);
-	if (command(c, "AT+SFUN=5", 50) < 0)
-		goto end;
 	if (!strcmp(op, "band_lock") ||
 	    (!strcmp(op, "unlock") && text_equal(str(args, "scope"), "bands"))) {
 		desired = json_object_new_object();
@@ -384,8 +463,8 @@ J *advanced_execute(struct controller *c, const char *op, J *args)
 		if (!after)
 			goto end;
 		json_object_object_add(c->status, "band_limits", json_object_get(after));
-		if (!json_object_equal(get(get(after, "lte"), "masks"), get(desired, "lte")) ||
-		    !json_object_equal(get(get(after, "nr"), "masks"), get(desired, "nr"))) {
+		if (!mask_matches(get(after, "lte"), get(desired, "lte")) ||
+		    !mask_matches(get(after, "nr"), get(desired, "nr"))) {
 			errorf(CELL_MODEM, "Band readback mismatch");
 			goto end;
 		}
@@ -393,32 +472,45 @@ J *advanced_execute(struct controller *c, const char *op, J *args)
 		json_object_object_add(result, "band_limits", json_object_get(after));
 		boolean(result, "readback_verified", true);
 	} else {
-		if (command(c, "AT+SPFORCEFRQ=12,0", 50) < 0 ||
-		    command(c, "AT+SPFORCEFRQ=16,0", 50) < 0)
+		const char *rat = str(args, "rat");
+		int number = text_equal(rat, "nr") ? 16 : 12;
+		char wire[160];
+		snprintf(wire, sizeof(wire), "AT+SPFORCEFRQ=%d,0", number);
+		if (command(c, wire, 50) < 0)
 			goto end;
-		if (!strcmp(op, "cell_lock")) {
-			char wire[160];
-			snprintf(wire, sizeof(wire), "AT+SPFORCEFRQ=%d,2,%lld,%lld",
-				 text_equal(str(args, "rat"), "nr") ? 16 : 12,
+		bool lock = !strcmp(op, "cell_lock");
+		if (lock) {
+			snprintf(wire, sizeof(wire), "AT+SPFORCEFRQ=%d,2,%lld,%lld", number,
 				 (long long)json_object_get_int64(get(args, "arfcn")),
 				 (long long)json_object_get_int64(get(args, "pci")));
 			if (command(c, wire, 50) < 0)
 				goto end;
 		}
+		after = read_cell_lock(c, rat);
+		if (!after)
+			goto end;
+		if (json_object_get_boolean(get(after, "locked")) != lock ||
+		    (lock && (!json_object_equal(get(after, "arfcn"), get(args, "arfcn")) ||
+			      !json_object_equal(get(after, "pci"), get(args, "pci"))))) {
+			errorf(CELL_MODEM, "Cell-lock readback mismatch");
+			goto end;
+		}
 		result = json_object_new_object();
 		boolean(result, "command_accepted", true);
-		boolean(result, "readback_verified", false);
-		json_object_object_add(result, "requested_cell",
-				       !strcmp(op, "cell_lock") ? jclone(args) : NULL);
+		boolean(result, "readback_verified", true);
+		json_object_object_add(result, "cell_lock", json_object_get(after));
+		J *locks = get(c->status, "cell_locks");
+		if (!locks) {
+			locks = json_object_new_object();
+			json_object_object_add(c->status, "cell_locks", locks);
+		}
+		json_object_object_add(locks, rat, json_object_get(after));
 	}
-	if (controller_radio_on(c) < 0 || controller_publish(c) < 0) {
+end:
+	if (radio_end(c, &change, result != NULL) < 0) {
 		json_object_put(result);
 		result = NULL;
-		goto end;
 	}
-	json_object_object_add(result, "cfun", json_object_get(get(c->status, "cfun")));
-end:
-	c->want_data = c->transport.poisoned ? false : wanted;
 	json_object_put(desired);
 	json_object_put(after);
 	return result;

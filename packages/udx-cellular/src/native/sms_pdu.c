@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only Bounded 3GPP SMS codec; no device access. */
+/* SPDX-License-Identifier: GPL-2.0-only Bounded 3GPP SMS codec; no device
+ * access. */
 #include "common.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -66,43 +67,58 @@ static size_t put_utf8(char *out, uint32_t c)
 	out[3] = (char)(0x80 | (c & 63));
 	return 4;
 }
-static int utf8_bmp(const char *text, unsigned char out[804])
+/* Decode scalars first: byte boundaries are not Unicode character boundaries.
+ */
+static int utf8_scalars(const char *text, uint32_t out[918])
 {
 	const unsigned char *p = (const unsigned char *)text;
 	size_t count = 0;
 	if (!text || !*text)
-		return errorf(CELL_INVALID, "SMS text must contain nonempty BMP Unicode text");
+		return errorf(CELL_INVALID, "SMS text must not be empty");
 	while (*p) {
 		uint32_t c;
 		unsigned n;
+		uint32_t minimum;
 		if (*p < 128) {
 			c = *p++;
 			n = 0;
+			minimum = 0;
 		} else if (*p >= 0xc2 && *p <= 0xdf) {
 			c = *p++ & 31;
 			n = 1;
+			minimum = 128;
 		} else if (*p >= 0xe0 && *p <= 0xef) {
 			c = *p++ & 15;
 			n = 2;
+			minimum = 2048;
+		} else if (*p >= 0xf0 && *p <= 0xf4) {
+			c = *p++ & 7;
+			n = 3;
+			minimum = 65536;
 		} else
-			return errorf(CELL_INVALID, "SMS text must use BMP Unicode characters");
-		unsigned continuation = n;
+			return errorf(CELL_INVALID, "Invalid UTF-8 SMS text");
 		while (n--) {
 			if ((*p & 0xc0) != 0x80)
 				return errorf(CELL_INVALID, "Invalid UTF-8 SMS text");
 			c = (c << 6) | (*p++ & 63);
 		}
-		if ((continuation == 2 && c < 2048) || (continuation == 1 && c < 128) ||
-		    (c >= 0xd800 && c <= 0xdfff))
+		if (c < minimum || c > 0x10ffff || (c >= 0xd800 && c <= 0xdfff))
 			return errorf(CELL_INVALID, "Invalid UTF-8 SMS text");
-		if (count >= 402)
-			return errorf(CELL_INVALID,
-				      "SMS text is limited to 402 characters (six parts)");
-		out[count * 2] = (unsigned char)(c >> 8);
-		out[count * 2 + 1] = (unsigned char)c;
-		count++;
+		if (count == 918)
+			return errorf(CELL_INVALID, "SMS exceeds six parts");
+		out[count++] = c;
 	}
-	return (int)(count * 2);
+	return (int)count;
+}
+static int gsm_code(uint32_t c)
+{
+	for (int i = 0; i < 128; i++)
+		if (i != 27 && gsm[i] == c)
+			return i;
+	for (int i = 0; i < 128; i++)
+		if (extension(i) != 0xfffd && extension(i) == c)
+			return 128 + i;
+	return -1;
 }
 int sms_validate_number(const char *p)
 {
@@ -141,20 +157,56 @@ J *sms_encode(const char *number, const char *text, unsigned reference)
 {
 	if (sms_validate_number(number))
 		return NULL;
-	unsigned char data[804];
-	int bytes = utf8_bmp(text, data);
-	if (bytes < 0)
+	uint32_t scalars[918];
+	int count = utf8_scalars(text, scalars);
+	if (count < 0)
 		return NULL;
-	size_t size = (size_t)bytes, chunk = size <= 140 ? 140 : 134,
-	       total = (size + chunk - 1) / chunk;
+	bool seven = true;
+	for (int i = 0; i < count; i++)
+		if (gsm_code(scalars[i]) < 0)
+			seven = false;
+	unsigned char data[3672];
+	bool boundary[3673] = {true};
+	size_t size = 0;
+	for (int i = 0; i < count; i++) {
+		uint32_t c = scalars[i];
+		if (seven) {
+			int code = gsm_code(c);
+			if (code >= 128)
+				data[size++] = 27;
+			data[size++] = code & 127;
+		} else {
+			if (c > 65535) {
+				uint32_t high = 0xd800 + ((c - 0x10000) >> 10);
+				data[size++] = high >> 8;
+				data[size++] = high;
+				c = 0xdc00 + ((c - 0x10000) & 1023);
+			}
+			data[size++] = c >> 8;
+			data[size++] = c;
+		}
+		boundary[size] = true;
+	}
+	size_t limit = seven ? 160 : 140, chunk = size <= limit ? limit : seven ? 153 : 134;
+	size_t offsets[7] = {0}, total = 0;
+	while (offsets[total] < size) {
+		if (total == 6) {
+			errorf(CELL_INVALID, "SMS exceeds six parts");
+			return NULL;
+		}
+		size_t end = offsets[total] + chunk;
+		if (end > size)
+			end = size;
+		while (!boundary[end])
+			end--;
+		offsets[++total] = end;
+	}
 	const char *digits = number + (number[0] == '+');
 	size_t ndigit = strlen(digits);
 	J *parts = json_object_new_array();
 	for (size_t part = 0; part < total; part++) {
 		unsigned char pdu[256];
-		size_t n = 0, used = part * chunk, take = size - used;
-		if (take > chunk)
-			take = chunk;
+		size_t n = 0, used = offsets[part], take = offsets[part + 1] - used;
 		pdu[n++] = 0;
 		pdu[n++] = total > 1 ? 0x41 : 1;
 		pdu[n++] = 0;
@@ -165,8 +217,10 @@ J *sms_encode(const char *number, const char *text, unsigned reference)
 			    (unsigned char)((digits[i] - '0') |
 					    ((i + 1 < ndigit ? digits[i + 1] - '0' : 15) << 4));
 		pdu[n++] = 0;
-		pdu[n++] = 8;
-		pdu[n++] = (unsigned char)(take + (total > 1 ? 6 : 0));
+		pdu[n++] = seven ? 0 : 8;
+		pdu[n++] = (unsigned char)(take + (total > 1 ? (seven ? 7 : 6) : 0));
+		size_t payload = n;
+		memset(pdu + payload, 0, 140);
 		if (total > 1) {
 			pdu[n++] = 5;
 			pdu[n++] = 0;
@@ -175,8 +229,20 @@ J *sms_encode(const char *number, const char *text, unsigned reference)
 			pdu[n++] = (unsigned char)total;
 			pdu[n++] = (unsigned char)(part + 1);
 		}
-		memcpy(pdu + n, data + used, take);
-		n += take;
+		if (seven) {
+			size_t bit = total > 1 ? 49 : 0;
+			for (size_t i = 0; i < take; i++, bit += 7) {
+				pdu[payload + bit / 8] |=
+				    (unsigned char)(data[used + i] << (bit % 8));
+				if (bit % 8 > 1)
+					pdu[payload + bit / 8 + 1] |=
+					    data[used + i] >> (8 - bit % 8);
+			}
+			n = payload + (bit + 7) / 8;
+		} else {
+			memcpy(pdu + n, data + used, take);
+			n += take;
+		}
 		char hex[513];
 		for (size_t i = 0; i < n; i++) {
 			hex[i * 2] = "0123456789ABCDEF"[pdu[i] >> 4];
@@ -273,8 +339,16 @@ J *sms_decode(const char *hex)
 		size_t used = 0;
 		if ((toa & 0x70) == 0x10)
 			peer[used++] = '+';
-		for (unsigned i = 0; i < digits; i++)
-			peer[used++] = "0123456789ABCDEF"[(p[i / 2] >> ((i % 2) * 4)) & 15];
+		for (unsigned i = 0; i < digits; i++) {
+			unsigned digit = (p[i / 2] >> ((i % 2) * 4)) & 15;
+			if (digit == 15 && i + 1 == digits)
+				break;
+			if (digit == 15) {
+				errorf(CELL_INVALID, "Interior filler in SMS address");
+				goto bad;
+			}
+			peer[used++] = "0123456789*#abc"[digit];
+		}
 		peer[used] = 0;
 	}
 	if (!peer)
@@ -305,7 +379,32 @@ J *sms_decode(const char *hex)
 	p = take(&r, 1);
 	if (!p)
 		goto bad;
-	unsigned udl = *p, alphabet = (dcs >> 2) & 3;
+	unsigned udl = *p, alphabet = 3;
+	bool supported = true;
+	integer(out, "dcs", dcs);
+	if (dcs < 0x80) {
+		alphabet = (dcs >> 2) & 3;
+		supported = !(dcs & 0x20) && alphabet != 3;
+		boolean(out, "automatic_deletion", (dcs & 0x40) != 0);
+		if (dcs & 0x10)
+			integer(out, "message_class", dcs & 3);
+	} else if (dcs >= 0xc0 && dcs <= 0xef && !(dcs & 4)) {
+		alphabet = dcs >= 0xe0 ? 2 : 0;
+		boolean(out, "mwi_active", (dcs & 8) != 0);
+		boolean(out, "mwi_discard", dcs < 0xd0);
+		integer(out, "mwi_type", dcs & 3);
+	} else if (dcs >= 0xf0 && dcs <= 0xf7) {
+		alphabet = (dcs & 4) ? 1 : 0;
+		integer(out, "message_class", dcs & 3);
+	} else
+		supported = false;
+	if (!supported) {
+		string(out, "text", NULL);
+		string(out, "raw_pdu", hex);
+		string(out, "decode_error", "Unsupported DCS coding group or compression");
+		free(peer);
+		return out;
+	}
 	size_t bytes = alphabet == 0 ? (udl * 7u + 7) / 8 : udl;
 	p = take(&r, bytes);
 	if (!p)
@@ -340,12 +439,20 @@ J *sms_decode(const char *hex)
 	integer(out, "dcs", dcs);
 	json_object_object_add(out, "concat", concat);
 	concat = NULL;
-	if ((dcs & 0xc0) || (dcs & 0x20)) {
+	if (alphabet == 1) {
+		char binary[1025];
+		for (size_t i = header; i < bytes; i++) {
+			binary[(i - header) * 2] = "0123456789ABCDEF"[p[i] >> 4];
+			binary[(i - header) * 2 + 1] = "0123456789ABCDEF"[p[i] & 15];
+		}
+		binary[(bytes - header) * 2] = 0;
 		string(out, "text", NULL);
-		string(out, "decode_error", "Unsupported DCS coding group or compression");
+		string(out, "binary_hex", binary);
+		string(out, "encoding", "8bit");
 		free(peer);
 		return out;
 	}
+	string(out, "encoding", alphabet ? "utf16be" : "gsm7");
 	if (!alphabet)
 		text = unpack7(p, bytes, udl, (unsigned)((header * 8 + 6) / 7));
 	else {

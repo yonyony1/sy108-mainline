@@ -1,165 +1,138 @@
 'use strict';
 'require view';
+'require form';
 'require udx';
-'require dom';
+
 return view.extend({
+    load : function() {
+        return Promise.resolve();
+    },
     render : function() {
-        var busy = true, submitting = false, pending = null, history = [], current = {},
-            command = E('input', {
-                class : 'cbi-input-text',
-                name : 'at_command',
-                placeholder : _("Enter an AT command, for example AT+CSQ"),
-                maxlength : 256,
-                style : 'width:100%'
-            }),
-            timeout = E('input', {
-                class : 'cbi-input-text',
-                type : 'number',
-                value : 15,
-                min : 1,
-                max : 120,
-                style : 'width:6em'
-            }),
-            output = E('pre', {class : 'udx-console'}, _("Waiting for a command.")),
-            historyBox = E('div');
-        function renderHistory() {
-            dom.content(historyBox, history.length ? history.map(function(row) {
-                return E('details', {}, [
-                    E('summary', {},
-                      row.time + '  ' + row.command + '  ' +
-                          (row.success     ? 'OK'
-                           : row.uncertain ? _("Uncertain result")
-                                           : 'ERROR')),
-                    E('pre', {class : 'udx-console'},
-                      row.response || row.error || _("No response body"))
-                ]);
-            })
-                                                   : E('p', {class : 'udx-subtle'},
-                                                       _("No command history yet.")));
+        var m = new form.JSONMap(
+            {main : {identity : '0', imei : '', command : 'AT', timeout : '10', shortcut : 'AT'}},
+            _('AT terminal and IMEI'));
+        var s = m.section(form.NamedSection, 'main', 'main');
+        s.anonymous = true;
+        s.tab('at', _('AT terminal'));
+        s.tab('imei', _('IMEI'));
+        function action(tab, key, label, fn) {
+            var o = s.taboption(tab, form.Button, key, label);
+            o.inputtitle = label;
+            o.inputstyle = 'action';
+            o.onclick = function() {
+                return udx.notify(fn);
+            };
+            return o;
         }
-        function send() {
-            if (busy || pending)
-                return;
-            var text = command.value.trim(), seconds = Number(timeout.value);
-            if (!/^AT[\x20-\x7e]*$/.test(text) || /[;\r\n]/.test(text) || text.length > 256 ||
-                !Number.isInteger(seconds) || seconds < 1 || seconds > 120) {
-                udx.notice({error : _("Enter one AT command with a timeout of 1–120 seconds.")});
-                return;
-            }
-            busy = true;
-            submitting = true;
-            sendButton.disabled = true;
-            dom.content(output, _("Executing ") + text + ' …');
-            udx.cellular('at_debug', {command : text, timeout : seconds})
+        var command = s.taboption('at', form.Value, 'command', _('AT command'));
+        command.rmempty = false;
+        var timeout = s.taboption('at', form.Value, 'timeout', _('Timeout'));
+        timeout.datatype = 'range(1,120)';
+        var output = E('pre', {'aria-live' : 'polite'});
+        var response = s.taboption('at', form.DummyValue, '_response', _('Response'));
+        response.renderWidget = function() {
+            return output;
+        };
+        function run(wire) {
+            output.textContent = wire + '\n';
+            return udx
+                .execute('at_debug', {command : wire, timeout : Number(timeout.formvalue('main'))})
                 .then(function(r) {
-                    submitting = false;
-                    if (!r.accepted || !r.operation_ref) {
-                        busy = false;
-                        dom.content(output, r.error || _("Request was not accepted"));
-                        return;
-                    }
-                    pending = r.operation_ref;
+                    output.textContent = wire + '\n' + (r.response || '');
+                    return r;
                 })
                 .catch(function(e) {
-                    submitting = false;
-                    dom.content(
-                        output,
-                        _("The request result was not received. Check the latest operation.\n") +
-                            e.message);
+                    output.textContent =
+                        wire + '\n' + ((e.result || {}).response || '') + '\n' + e.message;
+                    throw e;
                 });
         }
-        var sendButton =
-            E('button', {class : 'cbi-button cbi-button-action', disabled : true, click : send},
-              _("Send command"));
-        command.addEventListener('keydown', function(ev) {
-            if (ev.key === 'Enter') {
-                ev.preventDefault();
-                send();
-            }
+        action('at', '_send', _('Execute AT command'), function() {
+            return run(command.formvalue('main') || '');
         });
-        var live =
-            udx.live(_("AT debugging"),
-                     function(d) {
-                         return [ udx.telemetryNote(udx.state(d.cellular), 'signal_refresh',
-                                                    d.sample_uptime) ];
-                     },
-                     function(d) {
-                         current = udx.state(d.cellular);
-                         var op = udx.state(d.cellular_operation);
-                         if (pending && op.id === pending.id && op.boot_id === pending.boot_id &&
-                             op.broker_id === pending.broker_id &&
-                             [ 'complete', 'failed', 'uncertain' ].indexOf(op.state) >= 0) {
-                             var result = op.result || {};
-                             result.command = result.command || command.value;
-                             result.error = result.error || op.error;
-                             result.uncertain = op.state === 'uncertain';
-                             result.time = new Date().toLocaleTimeString();
-                             history.unshift(result);
-                             history = history.slice(0, 20);
-                             pending = null;
-                             dom.content(output, (result.response || _("No response body")) +
-                                                     (result.error ? '\n' + result.error : '') +
-                                                     _("\nElapsed time: ") +
-                                                     udx.value(result.elapsed_ms === undefined
-                                                                   ? null
-                                                                   : result.elapsed_ms.toFixed(1),
-                                                               ' ms'));
-                             renderHistory();
-                         }
-                         busy = submitting || !current.available || current.state === 'uncertain' ||
-                                !!pending || [ 'queued', 'running' ].indexOf(op.state) >= 0;
-                         sendButton.disabled = busy || !udx.supports(current, 'at_debug');
-                     });
-        renderHistory();
-        return E('div', {}, [
-            live,
-            udx.section(_("Send command"),
-                        [
-                            E('div', {class : 'cbi-value'},
-                              [
-                                  E('label', {class : 'cbi-value-title'}, _("AT command")),
-                                  E('div', {class : 'cbi-value-field'}, command)
-                              ]),
-                            E('div', {class : 'cbi-value'},
-                              [
-                                  E('label', {class : 'cbi-value-title'}, _("Timeout (seconds)")),
-                                  E('div', {class : 'cbi-value-field'},
-                                    [ timeout, ' ', sendButton ])
-                              ]),
-                            E('div', {class : 'udx-actions'},
-                              [
-                                  [ 'IMEI', 'AT+CGSN' ], [ 'ICCID', 'AT+CCID' ],
-                                  [ _("Signal"), 'AT+CSQ' ],
-                                  [ _("Negotiated rate"), 'AT+CGEQOSRDP' ],
-                                  [ _("Registration status"), 'AT+CEREG?' ]
-                              ].map(function(x) {
-                                  return E('button', {
-                                      class : 'cbi-button',
-                                      click : function() {
-                                          command.value = x[1];
-                                          send();
-                                      }
-                                  },
-                                           x[0]);
-                              })),
-                            E('p', {class : 'udx-subtle'},
-                              _("Commands share one control channel with background queries. Configuration commands may change network state. Factory identity and AT channel framing cannot be changed through this interface."))
-                        ]),
-            udx.section(_("Response"), output),
-            udx.section(_("Command history"),
-                        [
-                            E('button', {
-                                class : 'cbi-button',
-                                click : function() {
-                                    history = [];
-                                    renderHistory();
-                                    dom.content(output, _("Waiting for a command."));
-                                }
-                            },
-                              _("Clear history")),
-                            historyBox
-                        ])
-        ]);
+        var shortcut = s.taboption('at', form.ListValue, 'shortcut', _('Quick command'));
+        ['AT', 'AT+CFUN?', 'AT+CPIN?', 'AT+COPS?', 'AT+CSQ', 'AT+SPIMEI?', 'AT+CCID', 'AT+CIMI',
+         'AT+SPLBAND=0', 'AT+SPLBAND=3', 'AT+SPFORCEFRQ=12,3', 'AT+SPFORCEFRQ=16,3', 'AT+CGDCONT?',
+         'AT+CGEQOSRDP']
+            .forEach(function(x) {
+                shortcut.value(x);
+            });
+        action('at', '_shortcut', _('Execute quick command'), function() {
+            return run(shortcut.formvalue('main'));
+        });
+        var identity = s.taboption('imei', form.ListValue, 'identity', _('IMEI index'));
+        identity.value('', '—');
+        identity.readonly = true;
+        var availableIdentities = [];
+        function updateIdentities(r) {
+            availableIdentities = r.identities || [];
+            identities.update(availableIdentities);
+            var selected = availableIdentities.find(function(x) {
+                return String(x.slot) === identity.formvalue('main');
+            }) || availableIdentities[0];
+            identity.readonly = availableIdentities.length < 2;
+            var choices = availableIdentities.map(function(x) {
+                return [ String(x.slot), 'IMEI ' + x.slot ];
+            });
+            if (!choices.length)
+                choices = [ [ '', '—' ] ];
+            return udx.setChoices(identity, choices, selected ? selected.slot : '')
+                .then(function() {
+                    if (selected)
+                        imei.getUIElement('main').setValue(selected.imei);
+                    return r;
+                });
+        }
+        var imei = s.taboption('imei', form.Value, 'imei', 'IMEI');
+        imei.validate = function(section, value) {
+            if (!/^\d{15}$/.test(value || ''))
+                return _('Enter a 15-digit IMEI');
+            var sum = 0;
+            for (var i = 0; i < 15; i++) {
+                var n = Number(value[i]) * (i % 2 ? 2 : 1);
+                sum += Math.floor(n / 10) + n % 10;
+            }
+            return sum % 10 ? _('IMEI Luhn check failed') : true;
+        };
+        var identities = udx.list(
+            [
+                [
+                    _('Identity'),
+                    function(r) {
+                        return 'IMEI ' + r.slot;
+                    }
+                ],
+                [
+                    'IMEI',
+                    function(r) {
+                        return r.imei;
+                    }
+                ]
+            ],
+            function(r) {
+                return r.slot;
+            },
+            false);
+        var identityTable = s.taboption('imei', form.DummyValue, '_identities', _('Readback'));
+        identityTable.renderWidget = function() {
+            return identities.node;
+        };
+        action('imei', '_read_imei', _('Read IMEI'), function() {
+            return udx.execute('imei_read', {}).then(updateIdentities);
+        });
+        action('imei', '_write_imei', _('Write IMEI'), function() {
+            if (!availableIdentities.some(function(x) {
+                    return String(x.slot) === identity.formvalue('main');
+                }))
+                throw new Error(_('Read IMEI'));
+            return udx
+                .execute('imei_write', {
+                    slot : Number(identity.formvalue('main')),
+                    imei : imei.formvalue('main') || ''
+                })
+                .then(updateIdentities);
+        });
+        return m.render();
     },
     handleSaveApply : null,
     handleSave : null,

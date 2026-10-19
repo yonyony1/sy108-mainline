@@ -8,7 +8,12 @@
 static const char *names[] = {"sa_nsa", "nsa_only", "sa_only"},
 		  *labels[] = {"SA + NSA", "NSA only", "SA only"};
 static const int readings[] = {66, 130, 258}, writes[] = {132, 260, 516};
-static const uint32_t slots[] = {66051, 16777731};
+struct physical_slot {
+	const char *name;
+	uint32_t mapping;
+};
+/* Three physical slots. Only the two documented mapping values are writable. */
+static const struct physical_slot slots[] = {{"SIM 1", 66051}, {"SIM 2", 16777731}, {"SIM 3", 0}};
 static int mode_index(const char *mode)
 {
 	for (int i = 0; i < 3; i++)
@@ -27,9 +32,9 @@ int mode_validate(const char *operation, J *args)
 	if (!strcmp(operation, "physical_slot")) {
 		int64_t slot = json_object_get_int64(get(args, "slot"));
 		return json_object_is_type(get(args, "slot"), json_type_int) &&
-			       (slot == 0 || slot == 1)
+			       (slot >= 0 && slot < (int64_t)(sizeof(slots) / sizeof(*slots)))
 			   ? 0
-			   : errorf(CELL_INVALID, "Physical SIM slot must be 0 or 1");
+			   : errorf(CELL_INVALID, "Physical SIM slot must be 0, 1 or 2");
 	}
 	return errorf(CELL_INVALID, "Unknown radio option");
 }
@@ -70,6 +75,37 @@ static J *read_nr(struct controller *c)
 	json_object_object_add(c->status, "nr_capability", json_object_get(row));
 	return row;
 }
+/* The caller owns the radio_begin/radio_end transaction. No RF transition here. */
+J *mode_set_nr(struct controller *c, const char *mode)
+{
+	int index = mode_index(mode);
+	if (index < 0) {
+		errorf(CELL_INVALID, "Unknown NR capability");
+		return NULL;
+	}
+	J *before = read_nr(c);
+	if (!before)
+		return NULL;
+	if (text_equal(str(before, "mode"), mode)) {
+		boolean(before, "unchanged", true);
+		return before;
+	}
+	json_object_put(before);
+	char wire[80];
+	snprintf(wire, sizeof(wire), "AT+SPCAPABILITY=51,1,%d", writes[index]);
+	if (radio_command(c, wire, 10) < 0)
+		return NULL;
+	J *after = read_nr(c);
+	if (!after)
+		return NULL;
+	if (json_object_get_int(get(after, "raw")) != readings[index]) {
+		json_object_put(after);
+		errorf(CELL_MODEM, "NR capability readback mismatch");
+		return NULL;
+	}
+	boolean(after, "readback_verified", true);
+	return after;
+}
 static J *read_slot(struct controller *c)
 {
 	J *fields = controller_query(c, "AT+SPCONFIGSIMSLOT?", 5, "+SPCONFIGSIMSLOT:");
@@ -85,9 +121,23 @@ static J *read_slot(struct controller *c)
 		return NULL;
 	}
 	J *row = json_object_new_object(), *choices = json_object_new_array();
-	json_object_array_add(choices, json_object_new_int(0));
-	json_object_array_add(choices, json_object_new_int(1));
-	integer(row, "slot", (raw >> 24) & 1);
+	J *descriptors = json_object_new_array();
+	for (size_t i = 0; i < sizeof(slots) / sizeof(*slots); i++) {
+		J *slot = json_object_new_object();
+		integer(slot, "slot", i);
+		string(slot, "name", slots[i].name);
+		boolean(slot, "switch_supported", slots[i].mapping != 0);
+		json_object_array_add(descriptors, slot);
+		if (slots[i].mapping)
+			json_object_array_add(choices, json_object_new_int(i));
+	}
+	integer(row, "physical_slot_count", sizeof(slots) / sizeof(*slots));
+	json_object_object_add(row, "slots", descriptors);
+	unsigned selected = (unsigned)(raw >> 24) & 255;
+	if (selected < sizeof(slots) / sizeof(*slots))
+		integer(row, "slot", selected);
+	else
+		json_object_object_add(row, "slot", NULL);
 	integer(row, "raw", raw);
 	json_object_object_add(row, "choices", choices);
 	integer(row, "logical_sim_count", 1);
@@ -117,12 +167,13 @@ static int radio(struct controller *c)
 	int64_t state;
 	bool valid =
 	    json_object_array_length(row) == 1 &&
-	    integer_text(json_object_get_string(json_object_array_get_idx(row, 0)), 0, 1, &state);
+	    integer_text(json_object_get_string(json_object_array_get_idx(row, 0)), 0, 4, &state) &&
+	    (state == 0 || state == 1 || state == 4);
 	json_object_put(row);
 	if (!valid)
 		return errorf(CELL_INVALID, "Unsupported radio state for capability change");
 	integer(c->status, "cfun", state);
-	return (int)state;
+	return state == 1;
 }
 static int command(struct controller *c, const char *text, double timeout)
 {
@@ -134,6 +185,10 @@ static int command(struct controller *c, const char *text, double timeout)
 }
 static int invalidate_sim(struct controller *c)
 {
+	c->fallback_attempted = false;
+	json_object_put(c->fallback_profile);
+	c->fallback_profile = NULL;
+	json_object_object_del(c->status, "automatic_apn");
 	c->telemetry_due[0] = 0;
 	c->telemetry_due[2] = 0;
 	c->telemetry_due[3] = 0;
@@ -179,28 +234,10 @@ static int refresh_sim(struct controller *c)
 }
 static J *restore(struct controller *c, int rf, bool wanted)
 {
-	int actual = radio(c);
-	if (actual < 0)
+	if (radio_restore(c, rf == 1, wanted) < 0)
 		return NULL;
-	if (rf && !actual) {
-		if (controller_radio_on(c) < 0)
-			return NULL;
-	} else if (!rf && actual) {
-		if (command(c, "AT+SFUN=5", 50) < 0)
-			return NULL;
-		actual = radio(c);
-		if (actual < 0)
-			return NULL;
-		if (actual) {
-			errorf(CELL_MODEM, "Radio-off restoration readback mismatch");
-			return NULL;
-		}
-	}
-	c->want_data = wanted && rf;
-	if (c->want_data)
-		return controller_connect(c, 10);
 	J *out = json_object_new_object();
-	boolean(out, "connected", false);
+	boolean(out, "connected", c->data != NULL);
 	return out;
 }
 J *mode_execute(struct controller *c, const char *operation, J *args)
@@ -241,11 +278,26 @@ J *mode_execute(struct controller *c, const char *operation, J *args)
 		return out;
 	}
 	bool nr = !strcmp(operation, "nr_capability");
+	if (!nr && !slots[json_object_get_int(get(args, "slot"))].mapping) {
+		errorf(CELL_INVALID, "SIM 3 mapping is not available in this board profile");
+		return NULL;
+	}
 	J *before = nr ? read_nr(c) : read_slot(c);
 	if (!before)
 		return NULL;
 	J *target = get(args, nr ? "mode" : "slot");
 	if (json_object_equal(get(before, nr ? "mode" : "slot"), target)) {
+		if (nr) {
+			J *changes = json_object_new_object();
+			string(changes, "modem.nr_capability", str(args, "mode"));
+			int rc = uci_commit(changes, NULL);
+			json_object_put(changes);
+			if (rc < 0) {
+				json_object_put(before);
+				return NULL;
+			}
+			string(c->config, "nr_capability", str(args, "mode"));
+		}
 		if (transition(c, operation, "complete", target, NULL) < 0) {
 			json_object_put(before);
 			return NULL;
@@ -262,7 +314,7 @@ J *mode_execute(struct controller *c, const char *operation, J *args)
 		json_object_put(before);
 		return NULL;
 	}
-	bool wanted = c->want_data;
+	bool wanted = c->want_data, sim_off = false;
 	c->want_data = false;
 	J *after = NULL, *result = NULL;
 	if (transition(c, operation, "switching", target, NULL) < 0)
@@ -303,13 +355,15 @@ J *mode_execute(struct controller *c, const char *operation, J *args)
 			goto fail;
 		c->initialized = false;
 		c->ims_initialized = false;
+		sim_off = true;
 		if (command(c, "AT+SFUN=3", 5) < 0 || refresh_sim(c) < 0)
 			goto fail;
 		delay_ms(2000);
 		int slot = json_object_get_int(target);
-		snprintf(wire, sizeof(wire), "AT+SPCONFIGSIMSLOT=%u", slots[slot]);
+		snprintf(wire, sizeof(wire), "AT+SPCONFIGSIMSLOT=%u", slots[slot].mapping);
 		if (command(c, wire, 5) < 0 || command(c, "AT+SFUN=2", 5) < 0)
 			goto fail;
+		sim_off = false;
 		int ready = refresh_sim(c);
 		if (ready < 0)
 			goto fail;
@@ -325,6 +379,15 @@ J *mode_execute(struct controller *c, const char *operation, J *args)
 		if (ready && info_sim_identity(c) < 0)
 			goto fail;
 	}
+	if (nr) {
+		J *changes = json_object_new_object();
+		string(changes, "modem.nr_capability", str(args, "mode"));
+		int rc = uci_commit(changes, NULL);
+		json_object_put(changes);
+		if (rc < 0)
+			goto fail;
+		string(c->config, "nr_capability", str(args, "mode"));
+	}
 	result = restore(c, rf, wanted);
 	if (!result)
 		goto fail;
@@ -339,7 +402,9 @@ fail:;
 	char saved[512];
 	snprintf(saved, sizeof(saved), "%s", cell_error);
 	enum cell_error_kind kind = cell_error_kind;
-	c->want_data = c->transport.poisoned ? false : wanted;
+	if (sim_off && !c->transport.poisoned)
+		command(c, "AT+SFUN=2", 5);
+	radio_restore(c, rf == 1, wanted);
 	transition(c, operation, c->transport.poisoned ? "uncertain" : "failed", target, saved);
 	json_object_put(before);
 	json_object_put(after);

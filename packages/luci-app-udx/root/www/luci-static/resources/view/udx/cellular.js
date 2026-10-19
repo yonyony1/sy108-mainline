@@ -1,296 +1,394 @@
 'use strict';
 'require view';
+'require form';
 'require udx';
+
 return view.extend({
-    render : function() {
-        var current = {}, busy = true, selected = {lte : [], nr : []}, dirty = false,
-            pending = null;
-        var rat = E('select', {name : 'rat', class : 'cbi-input-select'},
-                    [ E('option', {value : 'lte'}, 'LTE'), E('option', {value : 'nr'}, 'NR') ]),
-            arfcn = E('input', {
-                name : 'arfcn',
-                class : 'cbi-input-text',
-                type : 'number',
-                min : 0,
-                placeholder : 'EARFCN / NR-ARFCN'
-            }),
-            pci = E('input', {
-                name : 'pci',
-                class : 'cbi-input-text',
-                type : 'number',
-                min : 0,
-                max : 1007,
-                placeholder : 'PCI'
-            });
-        function submit(op, args) {
-            busy = true;
-            return udx.submit(op, args).then(function(r) {
-                if (r.accepted && r.operation_ref)
-                    pending = r.operation_ref;
-            });
-        }
-        function lockCell(r, a, p) {
-            if (busy)
-                return;
-            udx.confirm(
-                _("Lock cell"),
-                _("Lock ") + r.toUpperCase() + ' / ARFCN ' + a + ' / PCI ' + p +
-                    _(". The connection may be interrupted briefly. The modem does not provide cell-lock readback."),
-                function() {
-                    submit('cell_lock', {rat : r, arfcn : a, pci : p});
-                });
-        }
-        var refresh = E('button', {
-            class : 'cbi-button',
-            disabled : true,
-            click : function() {
-                refresh.disabled = true;
-                submit('advanced_refresh', {});
+    load : function() {
+        return Promise.all([ udx.getStatus(), L.resolveDefault(udx.getAPN(), {}) ]);
+    },
+    render : function(initial) {
+        var current = initial[0].cellular || {}, apnState = initial[1],
+            templates = apnState.templates || [], catalog = [];
+        var limits = current.band_limits || {}, profile = current.profile || {},
+            auth = current.auth || {};
+        var m = new form.JSONMap({
+            main : {
+                lte : (limits.lte || {}).unrestricted ? [] : (limits.lte || {}).bands || [],
+                nr : (limits.nr || {}).unrestricted ? [] : (limits.nr || {}).bands || [],
+                apn_mode : current.apn_mode || 'auto',
+                apn : profile.apn || '',
+                pdp_type : profile.pdp_type || 'IPV4V6',
+                username : auth.username || '',
+                password : '',
+                auth_method : auth.auth_method || 'none',
+                template : '0',
+                template_name : '',
+                provider : '',
+                plmn : '',
+                act : '7'
             }
         },
-                        _("Refresh band status"));
-        var cellsRefresh = E('button', {
-            class : 'cbi-button',
-            disabled : true,
-            click : function() {
-                cellsRefresh.disabled = true;
-                submit('cells_refresh', {});
-            }
-        },
-                             _("Read serving and neighboring cells"));
-        var custom = E('button', {
-            class : 'cbi-button cbi-button-action',
-            disabled : true,
-            click : function() {
-                var a = Number(arfcn.value), p = Number(pci.value);
-                if (!arfcn.value || !pci.value || !Number.isInteger(a) || a < 0 ||
-                    !Number.isInteger(p) || p < 0 || p > (rat.value === 'nr' ? 1007 : 503)) {
-                    udx.notice({
-                        error : _(
-                            "Enter a valid channel number and PCI. LTE PCI is 0–503; NR PCI is 0–1007.")
-                    });
-                    return;
-                }
-                lockCell(rat.value, a, p);
-            }
-        },
-                       _("Lock the specified cell"));
-        function cellTable(title, rows) {
-            var headers = [
-                _("Radio technology"), _("Band"), 'ARFCN', 'PCI', 'RSRP (dBm)', 'RSRQ (dB)',
-                'SINR (dB)', _("Operation")
-            ];
-            return udx.section(
-                title,
-                E('div', {class : 'udx-table-scroll'}, E('table', {class : 'table'}, [
-                      E('tr', {class : 'tr table-titles'}, headers.map(function(h) {
-                          return E('th', {class : 'th'}, h);
-                      })),
-                      rows.length
-                          ? rows.map(function(x) {
-                                var band = x.band ? x.band + (x.band_source === 'arfcn-inferred'
-                                                                  ? _(" (inferred)")
-                                                                  : '')
-                                                  : (x.band_candidates || []).join(' / ') ||
-                                                        _("Not reported");
-                                return E(
-                                    'tr', {class : 'tr'},
-                                    [
-                                        x.rat.toUpperCase(), band, x.arfcn, x.pci, x.rsrp, x.rsrq,
-                                        x.sinr
-                                    ]
-                                        .map(function(v) {
-                                            return E('td', {class : 'td'}, udx.value(v));
-                                        })
-                                        .concat([ E(
-                                            'td', {class : 'td'},
-                                            E('button', {
-                                                class : 'cbi-button',
-                                                disabled :
-                                                    (busy || !udx.supports(current, 'cell_lock')) ||
-                                                        null,
-                                                click : function() {
-                                                    lockCell(x.rat, x.arfcn, x.pci);
-                                                }
-                                            },
-                                              _("Lock"))) ]));
-                            })
-                          : E('tr', {class : 'tr'},
-                              E('td', {class : 'td', colspan : 8},
-                                (current.telemetry || {}).queries
-                                    ? _("No cells of this type were reported in this sample.")
-                                    : _("Reading cell information in the background.")))
-                  ])));
+                                 _('Bands, cells and APN'));
+        var s = m.section(form.NamedSection, 'main', 'main');
+        s.anonymous = true;
+        s.tab('bands', _('Band locking'));
+        s.tab('cells', _('Serving and neighboring cells'));
+        s.tab('operators', _('Operators'));
+        s.tab('apn', _('APN settings'));
+        function field(tab, kind, name, label) {
+            return s.taboption(tab, kind, name, label);
         }
-        var live = udx.live(
-            _("Advanced network"),
-            function(d) {
-                var c = udx.state(d.cellular), choices = c.band_choices || {},
-                    limits = c.band_limits || {}, cells = c.cells || [];
-                var groups = [
-                    [
-                        'LTE FDD', 'lte', (choices.lte || []).filter(function(x) {
-                            return Number(x.slice(1)) < 33;
-                        })
-                    ],
-                    [
-                        'LTE TDD', 'lte', (choices.lte || []).filter(function(x) {
-                            return Number(x.slice(1)) >= 33;
-                        })
-                    ],
-                    [ '5G NR', 'nr', choices.nr || [] ]
-                ];
-                var bandGroups = groups.map(function(group) {
-                    return E('div', {class : 'cbi-section-node'}, [
-                        E('h4', {}, group[0]),
-                        E('div', {class : 'udx-bands'}, group[2].map(function(name) {
-                            var box = E('input', {
-                                type : 'checkbox',
-                                name : 'band_' + name,
-                                disabled : (busy) || null
-                            });
-                            box.checked = selected[group[1]].indexOf(name) >= 0;
-                            box.addEventListener('change', function() {
-                                dirty = true;
-                                selected[group[1]] = selected[group[1]].filter(function(x) {
-                                    return x !== name;
-                                });
-                                if (box.checked)
-                                    selected[group[1]].push(name);
-                            });
-                            return E('label', {class : 'udx-band'}, [ box, name ]);
-                        })),
-                        group[2].length
-                            ? ''
-                            : E('p', {class : 'udx-subtle'}, _("Reading supported bands."))
-                    ]);
-                });
-                var count = selected.lte.length + selected.nr.length;
-                var apply = E('button', {
-                    class : 'cbi-button cbi-button-action',
-                    disabled : (busy || !count || !choices.lte) || null,
-                    click : function() {
-                        udx.confirm(
-                            _("Apply band restrictions"),
-                            _("Apply the selected ") + count +
-                                _(" bands. A radio technology with no bands selected remains unrestricted. The cellular connection may be interrupted briefly."),
-                            function() {
-                                submit('band_lock',
-                                       {lte : selected.lte.slice(), nr : selected.nr.slice()});
-                            });
-                    }
-                },
-                              _('Apply selected bands (%d)').format(count));
-                var unlock = E('button', {
-                    class : 'cbi-button',
-                    disabled : (busy || !choices.lte) || null,
-                    click : function() {
-                        udx.confirm(_("Remove band restrictions"),
-                                    _("Restore automatic LTE and NR band selection."), function() {
-                                        submit('unlock', {scope : 'bands'});
-                                    });
-                    }
-                },
-                               _("Remove band restrictions"));
-                return [
-                    udx.section(
-                        _("Band locking"),
-                        [
-                            E('div', {class : 'udx-grid'}, bandGroups),
-                            E('div', {class : 'udx-actions'}, [ apply, unlock ]),
-                            E('p', {class : 'udx-subtle'},
-                              [ 'lte', 'nr' ]
-                                  .map(function(r) {
-                                      var v = limits[r];
-                                      return r.toUpperCase() + ': ' +
-                                             (!v ? _("Reading")
-                                              : v.unrestricted
-                                                  ? _("Unrestricted")
-                                                  : (v.bands || []).join(', ') ||
-                                                        _("The modem reported unlisted mask bits"));
-                                  })
-                                  .join('; ')),
-                            udx.telemetryNote(c, 'advanced_refresh', d.sample_uptime)
-                        ]),
-                    cellTable(_("Serving cells"), cells.filter(function(x) {
-                        return x.serving;
-                    })),
-                    cellTable(_("Neighboring cells"), cells.filter(function(x) {
-                        return !x.serving;
-                    })),
-                    udx.telemetryNote(c, 'serving_refresh', d.sample_uptime),
-                    E('p', {class : 'udx-subtle'},
-                      _("Reported bands are distinguished from bands inferred from channel numbers. The same NR channel may belong to n77 or n78; ambiguous bands are not assigned arbitrarily.")),
-                    Object.keys(c.cell_query_errors || {}).length
-                        ? udx.table(_("Cell query diagnostics"),
-                                    Object.keys(c.cell_query_errors).map(function(k) {
-                                        return [ k, c.cell_query_errors[k] ];
-                                    }))
-                        : '',
-                    E('div', {class : 'udx-actions'},
-                      [
-                          E('button', {
-                              class : 'cbi-button',
-                              disabled : (busy) || null,
-                              click : function() {
-                                  udx.confirm(_("Remove cell restrictions"),
-                                              _("Restore automatic cell selection."), function() {
-                                                  submit('unlock', {scope : 'cells'});
-                                              });
-                              }
-                          },
-                            _("Remove cell restrictions")),
-                          E('a', {class : 'cbi-button', href : L.url('admin', 'udx', 'at')},
-                            _("AT command debugging"))
-                      ]),
-                    udx.operationTable(d)
-                ];
-            },
-            function(d) {
-                current = udx.state(d.cellular);
-                var op = udx.state(d.cellular_operation);
-                if (pending && op.id === pending.id && op.boot_id === pending.boot_id &&
-                    op.broker_id === pending.broker_id &&
-                    [ 'complete', 'failed', 'uncertain' ].indexOf(op.state) >= 0) {
-                    if (op.state === 'complete' &&
-                        (op.operation === 'band_lock' || op.operation === 'unlock'))
-                        dirty = false;
-                    pending = null;
+        function action(tab, name, label, fn) {
+            var o = field(tab, form.Button, name, label);
+            o.inputtitle = label;
+            o.inputstyle = 'action';
+            o.onclick = function() {
+                return udx.notify(fn);
+            };
+            return o;
+        }
+        function embed(tab, name, node) {
+            var o = field(tab, form.DummyValue, name, '');
+            o.renderWidget = function() {
+                return node;
+            };
+            return o;
+        }
+        var lte = field('bands', form.MultiValue, 'lte', _('LTE bands'));
+        ['B1', 'B3', 'B5', 'B8', 'B34', 'B38', 'B39', 'B40', 'B41'].forEach(function(b) {
+            lte.value(b);
+        });
+        var nr = field('bands', form.MultiValue, 'nr', _('NR bands'));
+        ['n1', 'n3', 'n5', 'n8', 'n28', 'n41', 'n77', 'n78', 'n79'].forEach(function(b) {
+            nr.value(b);
+        });
+        lte.description = nr.description = _('Leave empty for all bands.');
+        action('bands', '_lock', _('Apply bands'), function() {
+            return udx.execute(
+                'band_lock', {lte : lte.formvalue('main') || [], nr : nr.formvalue('main') || []});
+        });
+        action('bands', '_unlock', _('Unlock all bands'), function() {
+            return udx.execute('unlock', {scope : 'bands'});
+        });
+        var bandTable = udx.table(_('Applied bands'), [
+            [
+                'LTE',
+                function(c) {
+                    var r = (c.band_limits || {}).lte || {};
+                    return r.unrestricted ? _('Unrestricted') : r.bands;
                 }
-                busy = !current.available || current.state === 'uncertain' || !!pending ||
-                       [ 'queued', 'running' ].indexOf(op.state) >= 0;
-                if (!dirty) {
-                    ['lte', 'nr'].forEach(function(r) {
-                        var l = (current.band_limits || {})[r];
-                        selected[r] = l && !l.unrestricted ? (l.bands || []).slice() : [];
-                    });
+            ],
+            [
+                'NR',
+                function(c) {
+                    var r = (c.band_limits || {}).nr || {};
+                    return r.unrestricted ? _('Unrestricted') : r.bands;
                 }
-                refresh.disabled = busy || !udx.supports(current, 'advanced_refresh');
-                cellsRefresh.disabled = busy || !udx.supports(current, 'cells_refresh');
-                custom.disabled = busy || !udx.supports(current, 'cell_lock');
-            });
-        return E('div', {}, [
-            live, E('div', {class : 'udx-actions'}, [ refresh, cellsRefresh ]),
-            udx.section(_("Custom cell lock"),
-                        [
-                            E('div', {class : 'cbi-value'},
-                              [
-                                  E('span', {class : 'cbi-value-title'}, _("Radio technology")),
-                                  E('div', {class : 'cbi-value-field'}, rat)
-                              ]),
-                            E('div', {class : 'cbi-value'},
-                              [
-                                  E('span', {class : 'cbi-value-title'}, _("Channel number")),
-                                  E('div', {class : 'cbi-value-field'}, arfcn)
-                              ]),
-                            E('div', {class : 'cbi-value'},
-                              [
-                                  E('span', {class : 'cbi-value-title'}, 'PCI'),
-                                  E('div', {class : 'cbi-value-field'}, pci)
-                              ]),
-                            custom
-                        ])
+            ]
         ]);
+        embed('bands', '_band_status', bandTable.node);
+        action('bands', '_read_bands', _('Read band and cell locks'), function() {
+            return udx.execute('advanced_refresh', {});
+        });
+        var cellList = udx.list(
+            [
+                [
+                    _('Type'),
+                    function(r) {
+                        return r.rat.toUpperCase() + ' ' +
+                               (r.serving ? _('Serving') : _('Neighbor'));
+                    }
+                ],
+                [
+                    _('Band'),
+                    function(r) {
+                        return r.band || r.band_candidates;
+                    }
+                ],
+                [
+                    'ARFCN',
+                    function(r) {
+                        return r.arfcn;
+                    }
+                ],
+                [
+                    'PCI',
+                    function(r) {
+                        return r.pci;
+                    }
+                ],
+                [
+                    'RSRP',
+                    function(r) {
+                        return udx.value(r.rsrp, ' dBm');
+                    }
+                ],
+                [
+                    'RSRQ',
+                    function(r) {
+                        return udx.value(r.rsrq, ' dB');
+                    }
+                ],
+                [
+                    'SINR',
+                    function(r) {
+                        return udx.value(r.sinr, ' dB');
+                    }
+                ],
+                [
+                    'TAC',
+                    function(r) {
+                        return r.tac;
+                    }
+                ],
+                [
+                    'Cell ID',
+                    function(r) {
+                        return r.cell_id;
+                    }
+                ],
+                [
+                    _('Bandwidth'),
+                    function(r) {
+                        return udx.value(r.bandwidth_mhz, ' MHz');
+                    }
+                ]
+            ],
+            function(r) {
+                return [ r.rat, r.serving, r.arfcn, r.pci ].join(':');
+            },
+            false,
+            function(get) {
+                return udx.button(_('Lock cell'), function() {
+                    var r = get();
+                    return udx.execute('cell_lock', {rat : r.rat, arfcn : r.arfcn, pci : r.pci});
+                });
+            });
+        embed('cells', '_cells', cellList.node);
+        var cellLocks = udx.table(_('Cell locks'), [ 'lte', 'nr' ].map(function(rat) {
+            return [
+                rat.toUpperCase(),
+                function(c) {
+                    var r = (c.cell_locks || {})[rat] || {};
+                    return r.error || (r.locked === false ? _('Unlocked')
+                                       : r.locked         ? r.arfcn + ' / PCI ' + r.pci
+                                                          : null);
+                }
+            ];
+        }));
+        embed('cells', '_cell_locks', cellLocks.node);
+        ['lte', 'nr'].forEach(function(rat) {
+            action('cells', '_unlock_' + rat, _('Unlock') + ' ' + rat.toUpperCase(), function() {
+                return udx.execute('unlock', {scope : 'cells', rat : rat});
+            });
+        });
+        action('cells', '_unlock_cells', _('Unlock all cells'), function() {
+            return udx.execute('unlock', {scope : 'cells', rat : 'lte'}).then(function() {
+                return udx.execute('unlock', {scope : 'cells', rat : 'nr'});
+            });
+        });
+        action('cells', '_read_cells', _('Refresh cells'), function() {
+            return udx.execute('cells_refresh', {});
+        });
+        var operators = udx.list(
+            [
+                [
+                    _('Operator'),
+                    function(r) {
+                        return r.name;
+                    }
+                ],
+                [
+                    'PLMN',
+                    function(r) {
+                        return r.plmn;
+                    }
+                ],
+                [
+                    _('Technology'),
+                    function(r) {
+                        return r.act;
+                    }
+                ],
+                [
+                    _('Status'),
+                    function(r) {
+                        return [ _('Unknown'), _('Available'), _('Current'),
+                                 _('Forbidden') ][r.status];
+                    }
+                ]
+            ],
+            function(r) {
+                return r.plmn + ':' + r.act;
+            },
+            false,
+            function(get) {
+                return udx.button(_('Register'), function() {
+                    var r = get();
+                    return udx.execute('operator_select', {plmn : r.plmn, act : r.act});
+                });
+            });
+        action('operators', '_scan', _('Scan operators'), function() {
+            return udx.execute('operators_scan', {}).then(function(r) {
+                operators.update(r.operators);
+                return r;
+            });
+        });
+        action('operators', '_auto', _('Automatic operator selection'), function() {
+            return udx.execute('operator_auto', {});
+        });
+        embed('operators', '_operators', operators.node);
+        var plmn = field('operators', form.Value, 'plmn', 'MCC/MNC');
+        plmn.datatype = 'and(uinteger,minlength(5),maxlength(6))';
+        var act = field('operators', form.ListValue, 'act', _('Technology'));
+        act.value('7', 'LTE');
+        act.value('11', 'NR');
+        act.value('13', 'NR + LTE');
+        action('operators', '_register', _('Register manually'), function() {
+            return udx.execute(
+                'operator_select',
+                {plmn : plmn.formvalue('main'), act : Number(act.formvalue('main'))});
+        });
+        var apnMode = field('apn', form.ListValue, 'apn_mode', _('APN mode'));
+        apnMode.value('auto', _('Automatic'));
+        apnMode.value('manual', _('Manual'));
+        var apn = field('apn', form.Value, 'apn', 'APN');
+        apn.depends('apn_mode', 'manual');
+        var pdp = field('apn', form.ListValue, 'pdp_type', _('PDP type'));
+        ['IPV4V6', 'IP', 'IPV6'].forEach(function(x) {
+            pdp.value(x);
+        });
+        pdp.depends('apn_mode', 'manual');
+        var username = field('apn', form.Value, 'username', _('Username'));
+        username.depends('apn_mode', 'manual');
+        var password = field('apn', form.Value, 'password', _('Password'));
+        password.password = true;
+        password.depends('apn_mode', 'manual');
+        password.placeholder = auth.password_set ? _('Unchanged') : '';
+        var method = field('apn', form.ListValue, 'auth_method', _('Authentication'));
+        method.value('none', _('None'));
+        method.value('pap', 'PAP');
+        method.value('chap', 'CHAP');
+        method.depends('apn_mode', 'manual');
+        action('apn', '_save_apn', _('Apply APN'), function() {
+            if (apnMode.formvalue('main') === 'auto')
+                return udx.execute('apn_select', {mode : 'auto', template_id : 0});
+            return udx.execute('apn', {
+                apn : apn.formvalue('main') || '',
+                pdp_type : pdp.formvalue('main'),
+                cid : 1,
+                username : username.formvalue('main') || '',
+                password : password.formvalue('main') || null,
+                auth_method : method.formvalue('main')
+            });
+        });
+        var template = field('apn', form.ListValue, 'template', _('Saved template'));
+        template.value('0', _('Select a template'));
+        templates.forEach(function(t) {
+            template.value(String(t.id), t.name + ' — ' + t.apn);
+        });
+        function updateTemplates(r) {
+            templates = (r.apn || {}).templates || [];
+            var selected = r.saved_id != null ? String(r.saved_id) : template.formvalue('main');
+            if (!templates.some(function(t) {
+                    return String(t.id) === selected;
+                }))
+                selected = '0';
+            return udx
+                .setChoices(template,
+                            [ [ '0', _('Select a template') ] ].concat(templates.map(function(t) {
+                                return [ String(t.id), t.name + ' — ' + t.apn ];
+                            })),
+                            selected)
+                .then(function() {
+                    return r;
+                });
+        }
+        action('apn', '_use_template', _('Use template'), function() {
+            return udx.execute('apn_select',
+                               {mode : 'manual', template_id : Number(template.formvalue('main'))});
+        });
+        action('apn', '_delete_template', _('Delete template'), function() {
+            return udx.execute('apn_template_delete', {id : Number(template.formvalue('main'))})
+                .then(updateTemplates);
+        });
+        var name = field('apn', form.Value, 'template_name', _('New template name'));
+        action('apn', '_save_template', _('Save as template'), function() {
+            return udx
+                .execute('apn_template_save', {
+                    id : 0,
+                    name : name.formvalue('main') || '',
+                    apn : apn.formvalue('main') || '',
+                    pdp_type : pdp.formvalue('main'),
+                    username : username.formvalue('main') || '',
+                    password : password.formvalue('main') || '',
+                    auth_method : method.formvalue('main')
+                })
+                .then(updateTemplates);
+        });
+        var providerList = udx.list(
+            [
+                [
+                    _('Operator'),
+                    function(r) {
+                        return r.name;
+                    }
+                ],
+                [
+                    'MCC/MNC',
+                    function(r) {
+                        return r.plmn;
+                    }
+                ],
+                [
+                    'APN',
+                    function(r) {
+                        return r.apn;
+                    }
+                ]
+            ],
+            function(r) {
+                return r.plmn + ':' + r.apn;
+            },
+            false,
+            function(get) {
+                return udx.button(_('Use APN'), function() {
+                    var r = get();
+                    return udx.execute('apn', {
+                        apn : r.apn,
+                        pdp_type : r.pdp_type,
+                        cid : 1,
+                        username : r.username || '',
+                        password : r.password || '',
+                        auth_method : r.auth_method || 'none'
+                    });
+                });
+            });
+        action('apn', '_providers', _('Read SIM operator APNs'), function() {
+            return udx.execute('operator_catalog', {}).then(function(r) {
+                catalog = r.home_candidates || [];
+                providerList.update(catalog);
+                return r;
+            });
+        });
+        embed('apn', '_provider_table', providerList.node);
+        var errors = E('p');
+        embed('cells', '_query_errors', errors);
+        var error = udx.watch(udx.getStatus, function(d) {
+            current = d.cellular || {};
+            bandTable.update(current);
+            cellLocks.update(current);
+            cellList.update(current.cells || []);
+            errors.textContent = Object.keys(current.cell_query_errors || {})
+                                     .map(function(k) {
+                                         return k + ': ' + current.cell_query_errors[k];
+                                     })
+                                     .join('; ');
+        }, initial[0]);
+        return m.render().then(function(node) {
+            return E('div', {}, [ node, error ]);
+        });
     },
     handleSaveApply : null,
     handleSave : null,

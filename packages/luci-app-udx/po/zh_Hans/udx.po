@@ -1,73 +1,40 @@
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
-"Language: zh_Hans\n"
+"Language: zh_CN\n"
 
-msgid "\". The cellular connection may be interrupted briefly."
-msgstr "”，蜂窝连接可能暂时中断。"
+msgid "4G LTE only"
+msgstr "仅 4G LTE"
 
-msgid "(current)"
-msgstr "（当前）"
+msgid "5G / 4G / 3G / 2G automatic"
+msgstr "5G / 4G / 3G / 2G 自动"
 
-msgid "(inferred)"
-msgstr "（推算）"
+msgid "5G / 4G automatic (SA + NSA)"
+msgstr "5G / 4G 自动（SA + NSA）"
 
-msgid "(unconfirmed)"
-msgstr "（待确认）"
+msgid "5G NSA"
+msgstr "5G NSA"
 
-msgid ", reference"
-msgstr "，关联号 "
+msgid "5G SA only"
+msgstr "仅 5G SA"
 
-msgid ". The connection may be interrupted briefly. The modem does not provide cell-lock readback."
-msgstr "。连接可能暂时中断，基带不提供锁定状态回读。"
-
-msgid ". The connection will be interrupted and SIM information will be read again."
-msgstr "，连接将中断并重新读取卡片。"
-
-msgid ". Check the send receipt for updates."
-msgstr "。请查看发送回执以获取最新状态。"
-
-msgid ". Wait for modem submission confirmation after sending. Delivery is confirmed separately."
-msgstr "。发送后等待基带确认，送达状态需另行确认。"
-
-msgid "4G only"
-msgstr "仅 4G"
-
-msgid "5G / 4G automatic"
-msgstr "5G / 4G 自动"
-
-msgid "5G access capability"
-msgstr "5G 接入能力"
-
-msgid "5G capability"
-msgstr "5G 能力"
-
-msgid "5G only"
-msgstr "仅 5G"
-
-msgid "; confirmed"
-msgstr "；已确认 "
-
-msgid "; multipart message merged ("
-msgstr "；长短信已合并（"
-
-msgid "; multipart message received"
-msgstr "；长短信已收到 "
-
-msgid "A configuration reset is already running; wait for its result"
-msgstr "配置重置任务已存在，请等待结果"
-
-msgid "A final send receipt is not available yet"
-msgstr "尚未获得最终发送回执"
+msgid "A previous send result needs checking"
+msgstr "请查看上次发送结果"
 
 msgid "ACM console"
 msgstr "ACM 控制台"
 
-msgid "AP vote (Hz)"
-msgstr "AP 投票（Hz）"
+msgid "AMBR downlink"
+msgstr "AMBR 下行速率"
 
-msgid "APN and authentication settings applied; readback matches"
-msgstr "APN 与认证配置已应用，回读一致"
+msgid "AMBR uplink"
+msgstr "AMBR 上行速率"
+
+msgid "AP frequency request"
+msgstr "AP 请求频率"
+
+msgid "APN mode"
+msgstr "APN 模式"
 
 msgid "APN settings"
 msgstr "APN 设置"
@@ -75,95 +42,68 @@ msgstr "APN 设置"
 msgid "AT command"
 msgstr "AT 指令"
 
-msgid "AT command debugging"
-msgstr "AT 指令调试"
+msgid "AT terminal"
+msgstr "AT 终端"
 
-msgid "AT debugging"
-msgstr "AT 调试"
+msgid "AT terminal and IMEI"
+msgstr "AT 终端与 IMEI"
 
-msgid "Access technology"
-msgstr "接入方式"
+msgid "Action"
+msgstr "操作"
 
-msgid "Active slot"
-msgstr "当前卡槽"
-
-msgid "Active ·"
-msgstr "当前使用 · "
-
-msgid "Actual state"
-msgstr "实际状态"
-
-msgid "Advanced network"
-msgstr "高级网络"
+msgid "Active SIM"
+msgstr "当前 SIM"
 
 msgid "Airplane mode"
 msgstr "飞行模式"
 
-msgid "Allow roaming"
-msgstr "允许漫游"
-
-msgid "Applied configuration"
-msgstr "已应用组合"
+msgid "Applied bands"
+msgstr "当前频段限制"
 
 msgid "Apply"
 msgstr "应用"
 
-msgid "Apply APN mode"
-msgstr "应用 APN 模式"
+msgid "Apply APN"
+msgstr "应用 APN"
 
 msgid "Apply USB configuration"
 msgstr "应用 USB 组合"
 
-msgid "Apply band restrictions"
-msgstr "应用频段限制"
+msgid "Apply bands"
+msgstr "应用频段"
 
-msgid "Apply selected bands ("
-msgstr "应用选中频段（"
+msgid "Apply frequency settings"
+msgstr "应用频率设置"
 
-msgid "Apply selected bands (%d)"
-msgstr "应用选中频段（%d）"
+msgid "Apply network settings"
+msgstr "应用网络设置"
 
-msgid "Apply the APN configuration. The data connection may be interrupted. Check the device readback for the result."
-msgstr "将提交 APN 配置操作，数据连接可能中断；结果以设备回读为准。"
+msgid "Apply result"
+msgstr "应用结果"
 
-msgid "Apply the selected"
-msgstr "应用勾选的 "
+msgid "Apply settings"
+msgstr "应用设置"
+
+msgid "Authenticated ACM console"
+msgstr "ACM 认证终端"
 
 msgid "Authentication"
 msgstr "认证"
 
-msgid "Authentication method"
-msgstr "认证方式"
-
-msgid "Authentication username"
-msgstr "认证用户名"
-
 msgid "Automatic"
 msgstr "自动"
 
-msgid "Automatic background refresh"
-msgstr "后台自动刷新"
+msgid "Automatic (release AP request)"
+msgstr "自动（撤销 AP 请求）"
 
-msgid "Automatic firmware frequency scaling"
-msgstr "固件自动调频"
+msgid "Automatic operator selection"
+msgstr "自动选网"
 
-msgid "Automatic or manual mode"
-msgstr "自动或手动模式"
-
-msgid "Automatic; the network selects the APN"
-msgstr "自动，由网络选择 APN"
-
-msgid "Automatically select NR or LTE"
-msgstr "自动选择 NR 或 LTE"
-
-msgid "Available frequencies (Hz)"
-msgstr "可用频率（Hz）"
+msgid "Available"
+msgstr "可用"
 
 msgid "Available memory"
 msgstr "可用内存"
-
-msgid "Background queries are paused. Showing the latest cached data."
-msgstr "后台采集已暂停；显示最近一次缓存。"
 
 msgid "Band"
 msgstr "频段"
@@ -171,194 +111,134 @@ msgstr "频段"
 msgid "Band locking"
 msgstr "频段锁定"
 
-msgid "Bands and cells"
-msgstr "频段与小区"
+msgid "Bands, cells and APN"
+msgstr "频段、小区与 APN"
+
+msgid "Bandwidth"
+msgstr "带宽"
+
+msgid "Board and system"
+msgstr "板级与系统"
+
+msgid "Board information"
+msgstr "板级信息"
+
+msgid "Board name"
+msgstr "板卡名称"
 
 msgid "Boot and storage"
 msgstr "启动与存储"
 
+msgid "Boot information"
+msgstr "启动信息"
+
 msgid "Boot policy"
 msgstr "启动策略"
 
-msgid "Boot source"
-msgstr "启动来源"
+msgid "Buffered"
+msgstr "缓冲区"
 
-msgid "Boot target"
-msgstr "启动目标"
-
-msgid "CP vote (Hz)"
-msgstr "CP 投票（Hz）"
+msgid "CP frequency request"
+msgstr "CP 请求频率"
 
 msgid "CP/NV error"
 msgstr "CP/NV 错误"
 
-msgid "Cache status"
-msgstr "缓存状态"
+msgid "CPU clocks"
+msgstr "CPU 时钟"
 
-msgid "Cached status has expired; fresh data is not available"
-msgstr "状态已过期，未获得最新数据"
+msgid "CPU governor"
+msgstr "CPU 调频策略"
 
-msgid "Cancel"
-msgstr "取消"
+msgid "CPU maximum frequency"
+msgstr "CPU 最高频率"
 
-msgid "Carrier"
-msgstr "运营商"
+msgid "CPU minimum frequency"
+msgstr "CPU 最低频率"
 
-msgid "Cell query diagnostics"
-msgstr "小区查询诊断"
+msgid "CPU policy"
+msgstr "CPU 策略"
 
-msgid "Cellular connectivity will stop. Recovery provides USB management and firmware recovery."
-msgstr "蜂窝连接将停止。Recovery 提供 USB 管理和固件恢复功能。"
-
-msgid "Cellular radio"
-msgstr "蜂窝射频"
+msgid "Cell locks"
+msgstr "小区锁定"
 
 msgid "Cellular settings"
 msgstr "蜂窝设置"
 
-msgid "Cellular status"
-msgstr "蜂窝状态"
+msgid "Changing USB mode restarts the device. Changing ACM reconnects USB."
+msgstr "切换 USB 模式会重启设备；切换 ACM 会重新连接 USB。"
 
-msgid "Change 5G access mode"
-msgstr "切换 5G 接入方式"
+msgid "Check send result"
+msgstr "查看发送结果"
 
-msgid "Change network mode"
-msgstr "切换网络模式"
+msgid "Check the previous send result before starting another message"
+msgstr "请先查看上次发送结果，再开始新消息"
 
-msgid "Channel number"
-msgstr "频点"
+msgid "China Broadnet"
+msgstr "中国广电"
 
-msgid "Clear history"
-msgstr "清空记录"
+msgid "China Mobile"
+msgstr "中国移动"
 
-msgid "Clear the OpenWrt configuration and reboot? Device SSH keys and factory NV are retained. The login password will be reset to admin."
-msgstr "清除 OpenWrt 配置并重启？保留设备 SSH 密钥和原厂 NV，登录密码恢复为 admin。"
+msgid "China Telecom"
+msgstr "中国电信"
 
-msgid "Clear the existing password"
-msgstr " 明确清空密码"
+msgid "China Unicom"
+msgstr "中国联通"
 
-msgid "Collecting information in the background. This page updates automatically."
-msgstr "后台正在采集，页面将自动更新。"
-
-msgid "Collection status"
-msgstr "采集状态"
-
-msgid "Command accepted; cell-lock state cannot be read back"
-msgstr "命令已接受；小区锁定状态无法回读"
-
-msgid "Command history"
-msgstr "执行历史"
-
-msgid "Commands share one control channel with background queries. Configuration commands may change network state. Factory identity and AT channel framing cannot be changed through this interface."
-msgstr "指令与后台查询共用同一个控制通道。执行设置指令可能改变网络状态；原厂身份和 AT 通道格式不通过此入口修改。"
+msgid "Clear folder"
+msgstr "清空"
 
 msgid "Completed"
 msgstr "已完成"
 
-msgid "Completed; settings readback matches"
-msgstr "已完成，设置回读一致"
-
-msgid "Configuration reset is not ready: the runtime directory must be on tmpfs."
-msgstr "配置重置尚未就绪：运行目录必须位于 tmpfs。"
-
-msgid "Configuration reset requires /run on tmpfs; it is not ready"
-msgstr "配置重置要求 /run 使用 tmpfs，当前尚未就绪"
-
-msgid "Configuration reset was not queued"
-msgstr "配置重置未入队"
-
-msgid "Configuration restore failed"
-msgstr "配置恢复失败"
-
-msgid "Configuration saved but not applied:"
-msgstr "配置已保存，尚未应用："
-
-msgid "Confirm"
-msgstr "确认"
-
-msgid "Connect automatically at boot"
-msgstr "开机自动连接"
-
-msgid "Connect data"
-msgstr "连接数据"
-
 msgid "Connected"
 msgstr "已连接"
 
-msgid "Connection settings"
-msgstr "连接设置"
+msgid "Connecting"
+msgstr "正在连接"
 
-msgid "Connection status"
-msgstr "连接状态"
+msgid "Connection"
+msgstr "连接"
 
 msgid "Core service"
 msgstr "核心服务"
 
-msgid "Current APN configuration"
-msgstr "当前 APN 配置"
-
-msgid "Current USB speed"
-msgstr "USB 当前速率"
+msgid "Current"
+msgstr "当前"
 
 msgid "Current frequency"
 msgstr "当前频率"
 
-msgid "Current mode"
-msgstr "当前模式"
-
 msgid "Current network"
 msgstr "当前网络"
 
-msgid "Current speed"
-msgstr "当前速率"
+msgid "DDR clocks"
+msgstr "DDR 时钟"
 
-msgid "Currently in use; change the mode or profile first"
-msgstr "正在使用，先切换模式或模板"
+msgid "DDR frequency request"
+msgstr "DDR 请求频率"
 
-msgid "Currently roaming"
-msgstr "当前漫游"
-
-msgid "Custom cell lock"
-msgstr "自定义小区锁定"
-
-msgid "DDR frequency is coordinated by the PM_SYS firmware. The AP vote is not the current frequency."
-msgstr "DDR 频率由 PM_SYS 固件协调；AP 投票值不等于当前频率。"
+msgid "DDR governor"
+msgstr "DDR 调频策略"
 
 msgid "Data connection"
 msgstr "数据连接"
 
-msgid "Data interface"
-msgstr "数据接口"
+msgid "Data roaming"
+msgstr "数据漫游"
 
-msgid "Data session established"
-msgstr "数据会话已建立"
+msgid "Data size"
+msgstr "数据大小"
 
-msgid "Delete"
-msgstr "删除"
+msgid "Delete selected"
+msgstr "删除所选"
 
-msgid "Delete local history"
-msgstr "删除本地历史"
-
-msgid "Delete local history only. SIM messages and submission receipts are retained."
-msgstr "仅删除本地历史，SIM 中的短信和发送回执仍保留。"
-
-msgid "Delete local record"
-msgstr "删除本地记录"
-
-msgid "Delete message"
-msgstr "删除短信"
-
-msgid "Delete profile"
+msgid "Delete template"
 msgstr "删除模板"
 
-msgid "Delete this selected message from the SIM?"
-msgstr "从 SIM 删除选中的这条短信？"
-
-msgid "Delivery confirmed"
-msgstr "已确认送达"
-
-msgid "Delivery status is not available"
-msgstr "送达状态未获得"
+msgid "Deletion incomplete"
+msgstr "部分短信未删除"
 
 msgid "Device"
 msgstr "设备"
@@ -366,104 +246,74 @@ msgstr "设备"
 msgid "Device MAC"
 msgstr "设备 MAC"
 
-msgid "Device status is not available:"
-msgstr "未获得设备状态："
-
 msgid "Direct reception"
 msgstr "直接接收"
 
-msgid "Direct reception uses modem notifications and stores messages on the device. When disabled, messages are read from SIM storage."
-msgstr "直接接收使用基带通知并保存到设备；关闭时从 SIM 存储读取。"
+msgid "Disconnected"
+msgstr "未连接"
 
-msgid "Disabled"
-msgstr "未启用"
+msgid "Enter a 15-digit IMEI"
+msgstr "请输入 15 位 IMEI"
 
-msgid "Disconnect data"
-msgstr "断开数据"
+msgid "Execute AT command"
+msgstr "执行 AT 指令"
 
-msgid "Disconnect the current cellular data session."
-msgstr "断开当前蜂窝数据连接。"
+msgid "Execute quick command"
+msgstr "执行快捷指令"
 
-msgid "Edit"
-msgstr "编辑"
+msgid "Filesystem"
+msgstr "文件系统"
 
-msgid "Edit profile"
-msgstr "编辑模板"
-
-msgid "Elapsed time:"
-msgstr "\n耗时："
-
-msgid "Enable cellular radio"
-msgstr "开启蜂窝"
-
-msgid "Enable the authenticated ACM console"
-msgstr " 启用认证 ACM 控制台"
-
-msgid "Enabled"
-msgstr "已启用"
-
-msgid "Enter a 3–15 digit number and up to 402 BMP Unicode characters. Emoji are not supported."
-msgstr "请输入 3–15 位号码及最多 402 个 BMP Unicode 字符；不支持 emoji。"
-
-msgid "Enter a valid channel number and PCI. LTE PCI is 0–503; NR PCI is 0–1007."
-msgstr "请输入有效频点和 PCI。LTE PCI 范围 0–503，NR 为 0–1007。"
-
-msgid "Enter an AT command, for example AT+CSQ"
-msgstr "输入 AT 指令，例如 AT+CSQ"
-
-msgid "Enter one AT command with a timeout of 1–120 seconds."
-msgstr "请输入一条 AT 指令，超时范围为 1–120 秒。"
-
-msgid "Establish a data connection using the current APN."
-msgstr "使用当前 APN 建立数据连接。"
-
-msgid "Executing"
-msgstr "正在执行 "
-
-msgid "Extended information"
-msgstr "扩展信息"
-
-msgid "Extended modem information and query diagnostics"
-msgstr "基带扩展信息与查询诊断"
-
-msgid "Failed"
-msgstr "失败"
-
-msgid "Finish or cancel the current firmware operation before rebooting."
-msgstr "请先完成或取消当前固件操作，再重启设备。"
+msgid "Filesystems"
+msgstr "文件系统"
 
 msgid "Firmware DFS"
-msgstr "固件 DFS"
+msgstr "固件动态调频"
 
-msgid "Free memory"
-msgstr "空闲内存"
+msgid "Firmware also considers CP demand. The actual DDR frequency may exceed the AP request."
+msgstr "固件会同时考虑基带需求，DDR 实际频率可能高于 AP 请求值。"
 
-msgid "Frequency scaling policy"
+msgid "Firmware version"
+msgstr "固件版本"
+
+msgid "Forbidden"
+msgstr "不可注册"
+
+msgid "Free"
+msgstr "空闲"
+
+msgid "GBR downlink"
+msgstr "GBR 下行速率"
+
+msgid "GBR uplink"
+msgstr "GBR 上行速率"
+
+msgid "Governor"
 msgstr "调频策略"
 
 msgid "Hardware acceleration"
 msgstr "硬件加速"
 
-msgid "Hardware-accelerated NCM is the default. Software processing is also available; switching processing mode requires a reboot. Windows 11, macOS and Linux use their built-in network drivers. Check the applied configuration and exit code after reboot and reconnection."
-msgstr "默认使用 NCM 硬件加速，也可切换为软件处理；切换处理模式需要重启设备。面向 Windows 11、macOS 和 Linux，由系统自带网卡驱动识别。应用结果以重启并重新连接后的“已应用组合”和退出码为准。"
-
-msgid "Hide"
-msgstr "隐藏"
-
-msgid "History and reception"
-msgstr "历史记录与接收方式"
+msgid "Hardware and platform"
+msgstr "硬件与平台"
 
 msgid "Host MAC"
 msgstr "主机 MAC"
 
-msgid "IPv6 (actual kernel addresses)"
-msgstr "IPv6（内核实际地址）"
+msgid "Hostname"
+msgstr "主机名"
 
-msgid "Identity information"
-msgstr "身份信息"
+msgid "IMEI"
+msgstr "IMEI"
 
-msgid "Idle"
-msgstr "空闲"
+msgid "IMEI Luhn check failed"
+msgstr "IMEI 校验位错误"
+
+msgid "IMEI index"
+msgstr "IMEI 编号"
+
+msgid "Identity"
+msgstr "编号"
 
 msgid "Inbox"
 msgstr "收件箱"
@@ -471,80 +321,50 @@ msgstr "收件箱"
 msgid "Inbox limit"
 msgstr "收件箱上限"
 
-msgid "Inbox:"
-msgstr "收件箱 "
-
 msgid "Kernel"
 msgstr "内核"
 
-msgid "Kernel IPv6 addresses are not available"
-msgstr "内核 IPv6 地址未获得"
+msgid "LTE bands"
+msgstr "LTE 频段"
 
-msgid "LTE anchor with non-standalone NR"
-msgstr "LTE 锚点与 NR 非独立组网"
-
-msgid "LTE registration"
-msgstr "LTE 注册"
-
-msgid "Last apply exit code"
-msgstr "上次应用退出码"
-
-msgid "Latest cellular error"
-msgstr "最近蜂窝错误"
-
-msgid "Latest cellular operation"
-msgstr "最近蜂窝操作"
-
-msgid "Latest error"
+msgid "Last error"
 msgstr "最近错误"
 
-msgid "Leave Recovery and start the OpenWrt main system."
-msgstr "退出 Recovery，启动 OpenWrt 主系统。"
+msgid "Leave empty for all bands."
+msgstr "留空表示不限制频段。"
 
-msgid "Leave blank to keep the current password"
-msgstr "留空保留现有密码"
-
-msgid "Local history is not available. Refresh it first."
-msgstr "本地历史未获得，请刷新。"
-
-msgid "Local profiles"
-msgstr "本地模板"
-
-msgid "Lock"
-msgstr "锁定"
+msgid "Load average"
+msgstr "平均负载"
 
 msgid "Lock cell"
 msgstr "锁定小区"
 
-msgid "Lock the specified cell"
-msgstr "锁定指定小区"
+msgid "MBR downlink"
+msgstr "MBR 下行速率"
+
+msgid "MBR uplink"
+msgstr "MBR 上行速率"
 
 msgid "Manual"
 msgstr "手动"
 
-msgid "Manufacturer"
-msgstr "制造商"
-
-msgid "Mark as read"
-msgstr "标为已读"
+msgid "Maximum frequency"
+msgstr "最高频率"
 
 msgid "Memory"
 msgstr "内存"
 
-msgid "Message text"
+msgid "Message"
 msgstr "短信内容"
 
-msgid "Message text is not available"
-msgstr "未获得正文"
+msgid "Minimum frequency"
+msgstr "最低频率"
 
-msgid "Message text, up to 402 BMP Unicode characters"
-msgstr "短信内容，最多 402 个 BMP Unicode 字符"
+msgid "Minimum frequency must not exceed maximum frequency."
+msgstr "最低频率不能高于最高频率。"
 
-msgid "Messages stored on the SIM"
-msgstr "SIM 存储中的短信"
-
-msgid "Mobile network operator"
-msgstr "运营商"
+msgid "Mobile data"
+msgstr "移动数据"
 
 msgid "Mode"
 msgstr "模式"
@@ -552,125 +372,56 @@ msgstr "模式"
 msgid "Model"
 msgstr "型号"
 
-msgid "Modem and SIM"
-msgstr "基带与 SIM"
-
-msgid "Modem confirmed SMS submission; delivery status is not available"
-msgstr "基带已确认短信提交；送达状态未获得"
-
-msgid "Modem confirmed submission"
-msgstr "基带已确认提交"
+msgid "Modem reset is not supported in this version."
+msgstr "当前版本暂不支持基带复位。"
 
 msgid "Modem service"
 msgstr "基带服务"
 
-msgid "Mounted filesystems"
-msgstr "挂载文件系统"
+msgid "Modem storage"
+msgstr "基带存储"
 
-msgid "NCM · hardware acceleration"
-msgstr "NCM · 硬件加速"
+msgid "Mount point"
+msgstr "挂载点"
 
-msgid "NCM · software processing"
-msgstr "NCM · 软件处理"
+msgid "NCM hardware acceleration"
+msgstr "NCM 硬件加速"
 
-msgid "NR registration"
-msgstr "NR 注册"
+msgid "NCM software mode"
+msgstr "NCM 软件模式"
 
-msgid "NSA only"
-msgstr "仅 NSA"
+msgid "NR bands"
+msgstr "NR 频段"
 
-msgid "Negotiated downlink rate"
-msgstr "签约下行速率"
-
-msgid "Negotiated rate"
-msgstr "签约速率"
-
-msgid "Negotiated uplink rate"
-msgstr "签约上行速率"
-
-msgid "Neighboring cells"
+msgid "Neighbor"
 msgstr "邻区"
 
-msgid "Network management"
-msgstr "网络管理"
+msgid "Network control"
+msgstr "网络控制"
 
 msgid "Network mode"
 msgstr "网络模式"
 
-msgid "Network type"
-msgstr "网络类型"
-
-msgid "New message"
-msgstr "新短信"
-
-msgid "New profile"
-msgstr "新建模板"
+msgid "New template name"
+msgstr "新模板名称"
 
 msgid "No"
 msgstr "否"
 
-msgid "No SIM inserted"
-msgstr "未插卡"
+msgid "No messages selected"
+msgstr "未选择短信"
 
-msgid "No authentication"
-msgstr "不认证"
-
-msgid "No cells of this type were reported in this sample."
-msgstr "本次采样未报告此类小区。"
-
-msgid "No command history yet."
-msgstr "暂无执行记录。"
-
-msgid "No matching readback; the transition is not yet confirmed"
-msgstr "未获得匹配回读，尚不能确认切换完成"
-
-msgid "No matching received messages."
-msgstr "暂无匹配的收件记录。"
-
-msgid "No matching sent messages."
-msgstr "暂无匹配的发送记录。"
-
-msgid "No profiles yet. Create a new profile."
-msgstr "暂无模板，可新建。"
-
-msgid "No response body"
-msgstr "无返回正文"
-
-msgid "No result was received. Check the latest operation."
-msgstr "未获得结果，请查看最近操作。"
-
-msgid "No valid device status was received"
-msgstr "未获得有效设备状态"
+msgid "No pending message"
+msgstr "没有待确认的短信"
 
 msgid "None"
 msgstr "无"
 
-msgid "Not available"
-msgstr "未获得"
+msgid "Number"
+msgstr "号码"
 
-msgid "Not connected:"
-msgstr "尚未连接："
-
-msgid "Not provided by the modem"
-msgstr "基带未提供此字段"
-
-msgid "Not ready"
-msgstr "未就绪"
-
-msgid "Not registered"
-msgstr "未注册"
-
-msgid "Not reported"
-msgstr "未报告"
-
-msgid "Not running"
-msgstr "未运行"
-
-msgid "Not selected; this slot has not been queried"
-msgstr "未选择；未查询此卡槽"
-
-msgid "Number is not available"
-msgstr "未获得号码"
+msgid "Off"
+msgstr "关闭"
 
 msgid "On"
 msgstr "已开启"
@@ -678,280 +429,100 @@ msgstr "已开启"
 msgid "Open network management"
 msgstr "打开网络管理"
 
-msgid "Operation"
-msgstr "操作"
+msgid "Operation failed"
+msgstr "操作失败"
 
-msgid "Operation ID"
-msgstr "操作编号"
+msgid "Operation timed out; it was not submitted again"
+msgstr "操作等待超时，未重复提交"
 
-msgid "Operation was not queued"
-msgstr "操作未入队"
+msgid "Operator"
+msgstr "运营商"
 
-msgid "Outbox"
-msgstr "发件箱"
+msgid "Operators"
+msgstr "运营商"
 
-msgid "Outbox limit"
-msgstr "发件箱上限"
-
-msgid "Outbox:"
-msgstr "发件箱 "
+msgid "Overview and network control"
+msgstr "总览与网络控制"
 
 msgid "PDP type"
 msgstr "PDP 类型"
 
-msgid "PIN required"
-msgstr "需要 PIN"
-
-msgid "PUK required"
-msgstr "需要 PUK"
-
 msgid "Page cache"
 msgstr "页缓存"
-
-msgid "Parts:"
-msgstr "分段 "
 
 msgid "Password"
 msgstr "密码"
 
-msgid "Password is set"
-msgstr "密码已设置"
+msgid "Platform services"
+msgstr "平台服务"
 
-msgid "Paused"
-msgstr "已暂停"
-
-msgid "Pending request"
-msgstr "待处理请求"
-
-msgid "Periodic background queries"
-msgstr "后台定期采集"
-
-msgid "Physical slots and the active logical SIM are shown separately. Card presence is not inferred for an unselected slot."
-msgstr "物理卡槽与当前逻辑 SIM 分别显示；未选择的卡槽不推断有卡或无卡。"
-
-msgid "Platform runtime status"
-msgstr "平台运行状态"
-
-msgid "Preparation failed. Check the device status or Recovery."
-msgstr "准备失败；请检查设备状态或 Recovery。"
-
-msgid "Preparing reboot"
-msgstr "正在准备重启"
-
-msgid "Preparing upgrade"
-msgstr "正在准备升级"
-
-msgid "Profile deleted, ID"
-msgstr "模板已删除，编号 "
-
-msgid "Profile name"
-msgstr "模板名称"
-
-msgid "Profile saved, ID"
-msgstr "模板已保存，编号 "
-
-msgid "Profiles are not available. Read the profiles first."
-msgstr "未获得模板，请读取。"
-
-msgid "Query completed with missing fields; check the query errors"
-msgstr "查询完成，部分信息未获得；请查看查询错误"
-
-msgid "Query failed:"
-msgstr "查询失败："
-
-msgid "Queued"
-msgstr "已排队"
-
-msgid "RSSI not reported by the modem (CSQ 99)"
-msgstr "基带未报告 RSSI（CSQ 99）"
+msgid "Quick command"
+msgstr "快捷指令"
 
 msgid "Radio"
 msgstr "射频"
 
-msgid "Radio technology"
-msgstr "制式"
-
 msgid "Read"
 msgstr "已读"
 
-msgid "Read APN profiles"
-msgstr "读取 APN 模板"
+msgid "Read IMEI"
+msgstr "读取 IMEI"
 
-msgid "Read modem and SIM information"
-msgstr "读取基带与 SIM 信息"
+msgid "Read SIM operator APNs"
+msgstr "读取 SIM 运营商 APN"
 
-msgid "Read serving and neighboring cells"
-msgstr "读取服务小区与邻区"
+msgid "Read band and cell locks"
+msgstr "读取频段与小区锁定"
 
-msgid "Read-only"
+msgid "Read messages"
+msgstr "读取短信"
+
+msgid "Read only"
 msgstr "只读"
 
-msgid "Reading"
-msgstr "正在读取"
-
-msgid "Reading SIM slot information in the background."
-msgstr "后台正在读取卡槽信息。"
-
-msgid "Reading cell information in the background."
-msgstr "后台正在读取小区信息。"
-
-msgid "Reading device status…"
-msgstr "正在读取设备状态…"
-
-msgid "Reading supported bands."
-msgstr "正在读取支持的频段。"
-
-msgid "Reading the SIM inbox updates unread flags."
-msgstr "读取 SIM 收件箱会更新未读标记。"
-
-msgid "Ready"
-msgstr "已就绪"
-
-msgid "Reboot"
-msgstr "重启"
-
-msgid "Reboot completion has not been confirmed. Check the device."
-msgstr "尚未确认重启完成，请检查设备。"
-
-msgid "Reboot device"
-msgstr "重启设备"
-
-msgid "Reboot into Recovery"
-msgstr "重启进入 Recovery"
-
-msgid "Reboot into main system"
-msgstr "重启进入主系统"
-
-msgid "Reboot main system"
-msgstr "重启主系统"
-
-msgid "Reboot options"
-msgstr "重启选项"
-
-msgid "Rebooting…"
-msgstr "正在重启…"
-
-msgid "Receive directly on this device"
-msgstr " 直接接收到设备"
+msgid "Readback"
+msgstr "回读结果"
 
 msgid "Recipient number"
 msgstr "收件号码"
 
-msgid "Recipient:"
-msgstr "收件人："
+msgid "Refresh"
+msgstr "刷新"
 
-msgid "Recovery is running. Choose which system to start next."
-msgstr "当前运行 Recovery，请选择下一次启动的系统。"
+msgid "Refresh cells"
+msgstr "刷新小区"
 
-msgid "Refresh band status"
-msgstr "刷新频段状态"
+msgid "Refresh network information"
+msgstr "刷新网络信息"
 
-msgid "Refresh inbox"
-msgstr "刷新收件箱"
+msgid "Register"
+msgstr "注册"
 
-msgid "Refresh local history"
-msgstr "刷新本地历史"
+msgid "Register manually"
+msgstr "手动注册"
 
-msgid "Registered"
-msgstr "已注册"
-
-msgid "Registered, roaming"
-msgstr "已注册，漫游"
-
-msgid "Registration status"
-msgstr "注册状态"
-
-msgid "Remove band restrictions"
-msgstr "解除频段限制"
-
-msgid "Remove cell restrictions"
-msgstr "解除小区限制"
-
-msgid "Reported bands are distinguished from bands inferred from channel numbers. The same NR channel may belong to n77 or n78; ambiguous bands are not assigned arbitrarily."
-msgstr "频段来自基带报告；按频点推算的结果单独标注。相同 NR 频点可能对应 n77 / n78，不强行判定。"
-
-msgid "Request"
-msgstr "请求 "
-
-msgid "Request queued. Check the status below for the result."
-msgstr "请求已入队，结果以下方状态为准。"
-
-msgid "Request queued. Wait for the actual result below."
-msgstr "请求已入队，请等待下方实际结果。"
-
-msgid "Request result is not available"
-msgstr "请求结果未获得"
-
-msgid "Request was not accepted"
-msgstr "请求未被接受"
-
-msgid "Request was not executed"
-msgstr "请求未执行"
-
-msgid "Reset submission result is not available"
-msgstr "未获得重置任务提交结果"
-
-msgid "Resetting configuration"
-msgstr "正在重置配置"
+msgid "Reserved eraseblocks"
+msgstr "预留擦除块"
 
 msgid "Response"
 msgstr "返回结果"
 
-msgid "Restart Recovery"
-msgstr "重启 Recovery"
+msgid "Restart modem"
+msgstr "重启基带"
 
-msgid "Restart the Recovery system. The USB management connection will reconnect."
-msgstr "重新启动 Recovery，USB 管理连接将重新建立。"
+msgid "Root filesystem"
+msgstr "根文件系统"
 
-msgid "Restart the main system or boot into Recovery for maintenance."
-msgstr "重启主系统，或进入 Recovery 进行维护。"
+msgid "Root marker"
+msgstr "根分区标识"
 
-msgid "Restore automatic LTE and NR band selection."
-msgstr "恢复 LTE 和 NR 的自动频段选择。"
+msgid "Running system"
+msgstr "当前系统"
 
-msgid "Restore automatic cell selection."
-msgstr "恢复自动小区选择。"
+msgid "Runtime error"
+msgstr "平台运行错误"
 
-msgid "Result"
-msgstr "结果"
-
-msgid "Retrieved"
-msgstr "已读取"
-
-msgid "Revision"
-msgstr "版本"
-
-msgid "Root filesystem marker"
-msgstr "根文件系统标记"
-
-msgid "Running"
-msgstr "执行中"
-
-msgid "Runtime core status"
-msgstr "运行时核心状态"
-
-msgid "Runtime modem status"
-msgstr "运行时基带状态"
-
-msgid "Runtime read error"
-msgstr "运行时读取错误"
-
-msgid "SA only"
-msgstr "仅 SA"
-
-msgid "SIM and data connection"
-msgstr "SIM 与数据连接"
-
-msgid "SIM archive"
-msgstr "SIM 归档"
-
-msgid "SIM messages"
-msgstr "SIM 短信"
-
-msgid "SIM query error"
-msgstr "SIM 查询错误"
-
-msgid "SIM slots"
+msgid "SIM slot"
 msgstr "SIM 卡槽"
 
 msgid "SIM status"
@@ -960,206 +531,125 @@ msgstr "SIM 状态"
 msgid "SMS management"
 msgstr "短信管理"
 
-msgid "SMS settings"
-msgstr "短信设置"
+msgid "SY108"
+msgstr "SY108"
 
-msgid "SMS text is limited to 402 characters (six parts)"
-msgstr "正文最多 402 字符（6 条分段短信）"
+msgid "Save as template"
+msgstr "保存为模板"
 
-msgid "SMS text must contain nonempty BMP Unicode text"
-msgstr "短信正文须为非空 BMP Unicode 文本"
+msgid "Saved template"
+msgstr "已保存模板"
 
-msgid "SMS text must use BMP Unicode characters"
-msgstr "短信正文须为 BMP Unicode 文本"
+msgid "Scan operators"
+msgstr "扫描运营商"
 
-msgid "Save SMS settings"
-msgstr "保存短信设置"
+msgid "Searching for network"
+msgstr "正在搜网"
 
-msgid "Save automatic connection and roaming preferences."
-msgstr "保存开机自动连接与漫游许可。"
+msgid "Select"
+msgstr "选择"
 
-msgid "Save connection policy"
-msgstr "保存连接策略"
+msgid "Select a template"
+msgstr "选择模板"
 
-msgid "Save profile"
-msgstr "保存模板"
-
-msgid "Search messages"
-msgstr "搜索短信"
-
-msgid "Search number or message text"
-msgstr "搜索号码或内容"
-
-msgid "Select a profile"
-msgstr "请选择一个模板"
-
-msgid "Select a profile manually"
-msgstr "手动选择模板"
-
-msgid "Selected automatically by the carrier"
-msgstr "运营商自动选择"
-
-msgid "Selected by the network"
-msgstr "由网络选择"
-
-msgid "Selected profile"
-msgstr "所选模板"
+msgid "Select message"
+msgstr "选择短信"
 
 msgid "Send"
 msgstr "发送"
 
-msgid "Send SMS"
+msgid "Send message"
 msgstr "发送短信"
 
-msgid "Send command"
-msgstr "发送指令"
-
-msgid "Send receipt is not available"
-msgstr "未获得发送回执"
-
-msgid "Send result is not available"
+msgid "Send result unavailable"
 msgstr "未获得发送结果"
+
+msgid "Sending"
+msgstr "正在发送"
+
+msgid "Sensor"
+msgstr "传感器"
+
+msgid "Sensors and clocks"
+msgstr "传感器与时钟"
+
+msgid "Sent"
+msgstr "已发送"
+
+msgid "Sent limit"
+msgstr "已发送保留数量"
 
 msgid "Serial number"
 msgstr "序列号"
 
-msgid "Serving cells"
-msgstr "服务小区"
+msgid "Serving"
+msgstr "主小区"
 
-msgid "Settings are stored in OpenWrt UCI. Lowering a limit removes the oldest local history. SIM messages and submission receipts are retained."
-msgstr "设置保存在 OpenWrt UCI 中。降低上限会清理最早的本地历史；SIM 短信和发送回执保留。"
+msgid "Serving and neighboring cells"
+msgstr "主小区与邻区"
 
-msgid "Show"
-msgstr "显示"
+msgid "Set the same minimum and maximum for a fixed CPU frequency."
+msgstr "将最低与最高频率设为同一值，可固定 CPU 频率。"
 
-msgid "Shutdown preparation"
-msgstr "关机准备"
+msgid "Settings"
+msgstr "设置"
 
-msgid "Shutdown preparation error"
-msgstr "关机准备错误"
+msgid "Settings are saved and restored at startup."
+msgstr "设置会保存，并在开机时恢复。"
 
-msgid "Signal"
-msgstr "信号"
+msgid "Some messages were not deleted"
+msgstr "部分短信未删除"
 
-msgid "Signal strength"
-msgstr "信号强度"
+msgid "Speed"
+msgstr "速率"
 
-msgid "Slot query failed:"
-msgstr "卡槽查询失败："
+msgid "Start another message"
+msgstr "开始新消息"
 
 msgid "Status"
 msgstr "状态"
 
-msgid "Status for the current boot is not available"
-msgstr "当前启动的状态未获得"
+msgid "Status uncertain"
+msgstr "状态待确认"
 
-msgid "Status is not available"
-msgstr "未获得状态"
+msgid "Submitted to modem"
+msgstr "已提交到基带"
 
-msgid "Stop waiting"
-msgstr "结束等待"
+msgid "Swap free"
+msgstr "交换空间空闲"
 
-msgid "Stop waiting on this page"
-msgstr "结束本页等待"
+msgid "Swap total"
+msgstr "交换空间总量"
 
-msgid "Stopped waiting on this page. The original send result remains available in the device receipt."
-msgstr "已结束本页等待；原发送结果仍以设备回执为准。"
+msgid "System"
+msgstr "系统"
 
-msgid "Stopping services and waiting for the device. This may take several minutes."
-msgstr "正在停止服务并等待设备。此过程可能需要数分钟。"
+msgid "Target"
+msgstr "目标平台"
 
-msgid "Submission result is not available: %s"
-msgstr "未获得提交结果：%s"
-
-msgid "Submission result is uncertain. Check the send receipt."
-msgstr "提交结果不确定，请查看发送回执。"
-
-msgid "Submitting"
-msgstr "提交中"
-
-msgid "Submitting SMS, request"
-msgstr "正在提交短信，请求 "
-
-msgid "Swap"
-msgstr "交换空间"
-
-msgid "Switch SIM slot"
-msgstr "切换 SIM 卡槽"
-
-msgid "Switch failed"
-msgstr "切换失败"
-
-msgid "Switch to \""
-msgstr "切换为“"
-
-msgid "Switch to SIM"
-msgstr "切换至 SIM "
-
-msgid "Switching between hardware and software processing saves the configuration and reboots the device. Changing ACM alone reconnects USB. Both processing modes use NCM. The ACM console requires authentication."
-msgstr "切换硬件／软件处理模式会保存配置并重启设备。仅调整 ACM 时 USB 会重新连接。两种模式均使用 NCM 协议；ACM 控制台需要登录认证。"
-
-msgid "Switching; the cellular connection is temporarily interrupted"
-msgstr "切换中，蜂窝连接暂时中断"
-
-msgid "System monitor"
-msgstr "系统监控"
-
-msgid "System status"
-msgstr "系统状态"
+msgid "Technology"
+msgstr "网络制式"
 
 msgid "Temperature"
 msgstr "温度"
 
-msgid "Temperature, DDR and memory"
-msgstr "温度、DDR 与内存"
-
-msgid "The current SMS cache is not available. Refresh the inbox."
-msgstr "未获得当前短信缓存，请刷新收件箱。"
-
-msgid "The device runtime performs a controlled reboot after stopping cellular and NV services."
-msgstr "停止蜂窝与 NV 服务后，由设备运行时执行受控重启。"
-
-msgid "The inbox limit is 10–150 and the outbox limit is 1–50."
-msgstr "收件箱上限为 10–150，发件箱上限为 1–50。"
-
-msgid "The modem omitted some fields. Available information has been retained."
-msgstr "部分字段基带未返回，已保留可用信息。"
-
-msgid "The modem reported unlisted mask bits"
-msgstr "基带返回未列出的掩码位"
+msgid "Temperatures"
+msgstr "温度"
 
 msgid "The modem supplies the IP configuration. Manage the APN and radio settings in UDX710; netifd manages this network interface."
 msgstr "IP 配置由基带提供。请在 UDX710 页面管理 APN 和射频设置；网络接口由 netifd 管理。"
 
-msgid "The number must contain 3–15 digits, optionally prefixed with +"
-msgstr "号码须为 3–15 位数字，可带 +"
+msgid "Time"
+msgstr "时间"
 
-msgid "The request result was not received. Check the latest operation."
-msgstr "未收到请求结果，请查看最近操作。\n"
+msgid "Timeout"
+msgstr "超时秒数"
 
-msgid "The upgrade result was not received. Check the device or Recovery."
-msgstr "未获得升级返回结果，请查看设备或 Recovery 状态。"
+msgid "Total"
+msgstr "总量"
 
-msgid "Sending continues on the device. Check its receipt before sending another message."
-msgstr "设备端仍在发送。请查看发送回执后再发送另一条短信。"
-
-msgid "Time is not available"
-msgstr "未获得时间"
-
-msgid "Timeout (seconds)"
-msgstr "超时（秒）"
-
-msgid "Total memory"
-msgstr "总内存"
-
-msgid "Transition finished; check the readback in the latest operation"
-msgstr "切换结束，请核对最近操作回读结果"
-
-msgid "Turn off cellular radio. The current data connection will be interrupted."
-msgstr "关闭蜂窝射频，当前数据连接将中断。"
-
-msgid "Turn on cellular radio and reconnect according to the connection policy."
-msgstr "开启射频并按连接策略恢复联网。"
+msgid "Type"
+msgstr "类型"
 
 msgid "UBI volumes"
 msgstr "UBI 卷"
@@ -1170,23 +660,35 @@ msgstr "UDX710 蜂窝网络"
 msgid "USB configuration"
 msgstr "USB 网络组合"
 
-msgid "USB connection"
-msgstr "USB 连接"
+msgid "USB configuration failed"
+msgstr "USB 配置失败"
 
-msgid "USB management"
-msgstr "USB 管理"
+msgid "USB mode"
+msgstr "USB 模式"
 
-msgid "USB network"
-msgstr "USB 网络"
+msgid "USB reconnection timed out"
+msgstr "USB 重连超时"
 
-msgid "USB request was not queued"
-msgstr "USB 请求未入队"
+msgid "USB status"
+msgstr "USB 状态"
 
-msgid "Uncertain result"
-msgstr "结果不确定"
+msgid "Unchanged"
+msgstr "保持不变"
 
-msgid "Switch result is uncertain"
-msgstr "切换结果不确定"
+msgid "Unknown"
+msgstr "未知"
+
+msgid "Unlock"
+msgstr "解锁"
+
+msgid "Unlock all bands"
+msgstr "解锁全部频段"
+
+msgid "Unlock all cells"
+msgstr "解锁全部小区"
+
+msgid "Unlocked"
+msgstr "未锁定"
 
 msgid "Unread"
 msgstr "未读"
@@ -1194,89 +696,38 @@ msgstr "未读"
 msgid "Unrestricted"
 msgstr "不限制"
 
-msgid "Unsaved settings will be lost after reboot."
-msgstr "有未保存的配置，重启后将丢失。"
-
-msgid "Updated"
-msgstr "更新于 "
-
-msgid "Updated %d seconds ago;"
-msgstr "更新于 %d 秒前；"
-
-msgid "Upgrade preparation failed; completion was not reported."
-msgstr "升级准备失败，未报告完成。"
-
 msgid "Uptime"
 msgstr "运行时间"
 
-msgid "Use LTE networks"
-msgstr "使用 LTE 网络"
-
-msgid "Use NR networks"
-msgstr "使用 NR 网络"
+msgid "Use APN"
+msgstr "使用此 APN"
 
 msgid "Use gateway metric"
 msgstr "网关跃点"
 
-msgid "Use this slot"
-msgstr "切换至此卡槽"
+msgid "Use template"
+msgstr "使用模板"
 
 msgid "Username"
 msgstr "用户名"
 
-msgid "Waiting for a command."
-msgstr "等待发送指令。"
+msgid "Volume"
+msgstr "卷名"
 
-msgid "Waiting for the device to reconnect."
-msgstr "等待设备重新连接。"
+msgid "Waiting for"
+msgstr "等待"
 
-msgid "When editing an existing profile, leave the password blank to retain it. Select \"Clear the existing password\" to remove it. Internet data uses CID 1."
-msgstr "编辑已有模板时，密码留空表示保留；勾选“明确清空密码”才会删除密码。互联网数据口固定使用 CID 1。"
+msgid "Waiting for SIM"
+msgstr "等待 SIM 卡"
 
-msgid "Writable"
-msgstr "可写"
+msgid "Waiting for packet attachment"
+msgstr "等待数据网络附着"
+
+msgid "Waiting for radio"
+msgstr "等待射频开启"
+
+msgid "Write IMEI"
+msgstr "写入 IMEI"
 
 msgid "Yes"
 msgstr "是"
-
-msgid "[Missing part %d]"
-msgstr "[缺少第 %d 段]"
-
-msgid "[This message part could not be decoded]"
-msgstr "[本段正文无法解码]"
-
-msgid "available /"
-msgstr " 可用 / "
-
-msgid "bands. A radio technology with no bands selected remains unrestricted. The cellular connection may be interrupted briefly."
-msgstr " 个频段；未勾选任何频段的制式保持不限制。蜂窝连接可能暂时中断。"
-
-msgid "messages. Multipart messages are shown as complete messages."
-msgstr " 条；长短信按完整消息显示。"
-
-msgid "messages. Submission and carrier delivery reports are shown separately."
-msgstr " 条；提交状态与运营商送达报告分别显示。"
-
-msgid "parts"
-msgstr " 段"
-
-msgid "parts)"
-msgstr " 段）"
-
-msgid "seconds"
-msgstr " 秒"
-
-msgid "seconds ago;"
-msgstr " 秒前；"
-
-msgid "Not used in automatic mode"
-msgstr "自动模式不使用模板"
-
-msgid "APN configuration cache is stale."
-msgstr "APN 配置缓存已过期。"
-
-msgid "Reading APN configuration in the background."
-msgstr "后台正在读取 APN 配置。"
-
-msgid "Reading APN profiles in the background."
-msgstr "后台正在读取 APN 模板。"

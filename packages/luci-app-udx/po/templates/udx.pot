@@ -1,72 +1,38 @@
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
-"Language: en\n"
 
-msgid "\". The cellular connection may be interrupted briefly."
+msgid "4G LTE only"
 msgstr ""
 
-msgid "(current)"
+msgid "5G / 4G / 3G / 2G automatic"
 msgstr ""
 
-msgid "(inferred)"
+msgid "5G / 4G automatic (SA + NSA)"
 msgstr ""
 
-msgid "(unconfirmed)"
+msgid "5G NSA"
 msgstr ""
 
-msgid ", reference"
+msgid "5G SA only"
 msgstr ""
 
-msgid ". The connection may be interrupted briefly. The modem does not provide cell-lock readback."
-msgstr ""
-
-msgid ". The connection will be interrupted and SIM information will be read again."
-msgstr ""
-
-msgid ". Check the send receipt for updates."
-msgstr ""
-
-msgid ". Wait for modem submission confirmation after sending. Delivery is confirmed separately."
-msgstr ""
-
-msgid "4G only"
-msgstr ""
-
-msgid "5G / 4G automatic"
-msgstr ""
-
-msgid "5G access capability"
-msgstr ""
-
-msgid "5G capability"
-msgstr ""
-
-msgid "5G only"
-msgstr ""
-
-msgid "; confirmed"
-msgstr ""
-
-msgid "; multipart message merged ("
-msgstr ""
-
-msgid "; multipart message received"
-msgstr ""
-
-msgid "A configuration reset is already running; wait for its result"
-msgstr ""
-
-msgid "A final send receipt is not available yet"
+msgid "A previous send result needs checking"
 msgstr ""
 
 msgid "ACM console"
 msgstr ""
 
-msgid "AP vote (Hz)"
+msgid "AMBR downlink"
 msgstr ""
 
-msgid "APN and authentication settings applied; readback matches"
+msgid "AMBR uplink"
+msgstr ""
+
+msgid "AP frequency request"
+msgstr ""
+
+msgid "APN mode"
 msgstr ""
 
 msgid "APN settings"
@@ -75,94 +41,67 @@ msgstr ""
 msgid "AT command"
 msgstr ""
 
-msgid "AT command debugging"
+msgid "AT terminal"
 msgstr ""
 
-msgid "AT debugging"
+msgid "AT terminal and IMEI"
 msgstr ""
 
-msgid "Access technology"
+msgid "Action"
 msgstr ""
 
-msgid "Active slot"
-msgstr ""
-
-msgid "Active ·"
-msgstr ""
-
-msgid "Actual state"
-msgstr ""
-
-msgid "Advanced network"
+msgid "Active SIM"
 msgstr ""
 
 msgid "Airplane mode"
 msgstr ""
 
-msgid "Allow roaming"
-msgstr ""
-
-msgid "Applied configuration"
+msgid "Applied bands"
 msgstr ""
 
 msgid "Apply"
 msgstr ""
 
-msgid "Apply APN mode"
+msgid "Apply APN"
 msgstr ""
 
 msgid "Apply USB configuration"
 msgstr ""
 
-msgid "Apply band restrictions"
+msgid "Apply bands"
 msgstr ""
 
-msgid "Apply selected bands ("
+msgid "Apply frequency settings"
 msgstr ""
 
-msgid "Apply selected bands (%d)"
+msgid "Apply network settings"
 msgstr ""
 
-msgid "Apply the APN configuration. The data connection may be interrupted. Check the device readback for the result."
+msgid "Apply result"
 msgstr ""
 
-msgid "Apply the selected"
+msgid "Apply settings"
+msgstr ""
+
+msgid "Authenticated ACM console"
 msgstr ""
 
 msgid "Authentication"
 msgstr ""
 
-msgid "Authentication method"
-msgstr ""
-
-msgid "Authentication username"
-msgstr ""
-
 msgid "Automatic"
 msgstr ""
 
-msgid "Automatic background refresh"
+msgid "Automatic (release AP request)"
 msgstr ""
 
-msgid "Automatic firmware frequency scaling"
+msgid "Automatic operator selection"
 msgstr ""
 
-msgid "Automatic or manual mode"
-msgstr ""
-
-msgid "Automatic; the network selects the APN"
-msgstr ""
-
-msgid "Automatically select NR or LTE"
-msgstr ""
-
-msgid "Available frequencies (Hz)"
+msgid "Available"
 msgstr ""
 
 msgid "Available memory"
-msgstr ""
-
-msgid "Background queries are paused. Showing the latest cached data."
 msgstr ""
 
 msgid "Band"
@@ -171,193 +110,133 @@ msgstr ""
 msgid "Band locking"
 msgstr ""
 
-msgid "Bands and cells"
+msgid "Bands, cells and APN"
+msgstr ""
+
+msgid "Bandwidth"
+msgstr ""
+
+msgid "Board and system"
+msgstr ""
+
+msgid "Board information"
+msgstr ""
+
+msgid "Board name"
 msgstr ""
 
 msgid "Boot and storage"
 msgstr ""
 
+msgid "Boot information"
+msgstr ""
+
 msgid "Boot policy"
 msgstr ""
 
-msgid "Boot source"
+msgid "Buffered"
 msgstr ""
 
-msgid "Boot target"
-msgstr ""
-
-msgid "CP vote (Hz)"
+msgid "CP frequency request"
 msgstr ""
 
 msgid "CP/NV error"
 msgstr ""
 
-msgid "Cache status"
+msgid "CPU clocks"
 msgstr ""
 
-msgid "Cached status has expired; fresh data is not available"
+msgid "CPU governor"
 msgstr ""
 
-msgid "Cancel"
+msgid "CPU maximum frequency"
 msgstr ""
 
-msgid "Carrier"
+msgid "CPU minimum frequency"
 msgstr ""
 
-msgid "Cell query diagnostics"
+msgid "CPU policy"
 msgstr ""
 
-msgid "Cellular connectivity will stop. Recovery provides USB management and firmware recovery."
-msgstr ""
-
-msgid "Cellular radio"
+msgid "Cell locks"
 msgstr ""
 
 msgid "Cellular settings"
 msgstr ""
 
-msgid "Cellular status"
+msgid "Changing USB mode restarts the device. Changing ACM reconnects USB."
 msgstr ""
 
-msgid "Change 5G access mode"
+msgid "Check send result"
 msgstr ""
 
-msgid "Change network mode"
+msgid "Check the previous send result before starting another message"
 msgstr ""
 
-msgid "Channel number"
+msgid "China Broadnet"
 msgstr ""
 
-msgid "Clear history"
+msgid "China Mobile"
 msgstr ""
 
-msgid "Clear the OpenWrt configuration and reboot? Device SSH keys and factory NV are retained. The login password will be reset to admin."
+msgid "China Telecom"
 msgstr ""
 
-msgid "Clear the existing password"
+msgid "China Unicom"
 msgstr ""
 
-msgid "Collecting information in the background. This page updates automatically."
-msgstr ""
-
-msgid "Collection status"
-msgstr ""
-
-msgid "Command accepted; cell-lock state cannot be read back"
-msgstr ""
-
-msgid "Command history"
-msgstr ""
-
-msgid "Commands share one control channel with background queries. Configuration commands may change network state. Factory identity and AT channel framing cannot be changed through this interface."
+msgid "Clear folder"
 msgstr ""
 
 msgid "Completed"
 msgstr ""
 
-msgid "Completed; settings readback matches"
-msgstr ""
-
-msgid "Configuration reset is not ready: the runtime directory must be on tmpfs."
-msgstr ""
-
-msgid "Configuration reset requires /run on tmpfs; it is not ready"
-msgstr ""
-
-msgid "Configuration reset was not queued"
-msgstr ""
-
-msgid "Configuration restore failed"
-msgstr ""
-
-msgid "Configuration saved but not applied:"
-msgstr ""
-
-msgid "Confirm"
-msgstr ""
-
-msgid "Connect automatically at boot"
-msgstr ""
-
-msgid "Connect data"
-msgstr ""
-
 msgid "Connected"
 msgstr ""
 
-msgid "Connection settings"
+msgid "Connecting"
 msgstr ""
 
-msgid "Connection status"
+msgid "Connection"
 msgstr ""
 
 msgid "Core service"
 msgstr ""
 
-msgid "Current APN configuration"
-msgstr ""
-
-msgid "Current USB speed"
+msgid "Current"
 msgstr ""
 
 msgid "Current frequency"
 msgstr ""
 
-msgid "Current mode"
-msgstr ""
-
 msgid "Current network"
 msgstr ""
 
-msgid "Current speed"
+msgid "DDR clocks"
 msgstr ""
 
-msgid "Currently in use; change the mode or profile first"
+msgid "DDR frequency request"
 msgstr ""
 
-msgid "Currently roaming"
-msgstr ""
-
-msgid "Custom cell lock"
-msgstr ""
-
-msgid "DDR frequency is coordinated by the PM_SYS firmware. The AP vote is not the current frequency."
+msgid "DDR governor"
 msgstr ""
 
 msgid "Data connection"
 msgstr ""
 
-msgid "Data interface"
+msgid "Data roaming"
 msgstr ""
 
-msgid "Data session established"
+msgid "Data size"
 msgstr ""
 
-msgid "Delete"
+msgid "Delete selected"
 msgstr ""
 
-msgid "Delete local history"
+msgid "Delete template"
 msgstr ""
 
-msgid "Delete local history only. SIM messages and submission receipts are retained."
-msgstr ""
-
-msgid "Delete local record"
-msgstr ""
-
-msgid "Delete message"
-msgstr ""
-
-msgid "Delete profile"
-msgstr ""
-
-msgid "Delete this selected message from the SIM?"
-msgstr ""
-
-msgid "Delivery confirmed"
-msgstr ""
-
-msgid "Delivery status is not available"
+msgid "Deletion incomplete"
 msgstr ""
 
 msgid "Device"
@@ -366,103 +245,73 @@ msgstr ""
 msgid "Device MAC"
 msgstr ""
 
-msgid "Device status is not available:"
-msgstr ""
-
 msgid "Direct reception"
 msgstr ""
 
-msgid "Direct reception uses modem notifications and stores messages on the device. When disabled, messages are read from SIM storage."
+msgid "Disconnected"
 msgstr ""
 
-msgid "Disabled"
+msgid "Enter a 15-digit IMEI"
 msgstr ""
 
-msgid "Disconnect data"
+msgid "Execute AT command"
 msgstr ""
 
-msgid "Disconnect the current cellular data session."
+msgid "Execute quick command"
 msgstr ""
 
-msgid "Edit"
+msgid "Filesystem"
 msgstr ""
 
-msgid "Edit profile"
-msgstr ""
-
-msgid "Elapsed time:"
-msgstr ""
-
-msgid "Enable cellular radio"
-msgstr ""
-
-msgid "Enable the authenticated ACM console"
-msgstr ""
-
-msgid "Enabled"
-msgstr ""
-
-msgid "Enter a 3–15 digit number and up to 402 BMP Unicode characters. Emoji are not supported."
-msgstr ""
-
-msgid "Enter a valid channel number and PCI. LTE PCI is 0–503; NR PCI is 0–1007."
-msgstr ""
-
-msgid "Enter an AT command, for example AT+CSQ"
-msgstr ""
-
-msgid "Enter one AT command with a timeout of 1–120 seconds."
-msgstr ""
-
-msgid "Establish a data connection using the current APN."
-msgstr ""
-
-msgid "Executing"
-msgstr ""
-
-msgid "Extended information"
-msgstr ""
-
-msgid "Extended modem information and query diagnostics"
-msgstr ""
-
-msgid "Failed"
-msgstr ""
-
-msgid "Finish or cancel the current firmware operation before rebooting."
+msgid "Filesystems"
 msgstr ""
 
 msgid "Firmware DFS"
 msgstr ""
 
-msgid "Free memory"
+msgid "Firmware also considers CP demand. The actual DDR frequency may exceed the AP request."
 msgstr ""
 
-msgid "Frequency scaling policy"
+msgid "Firmware version"
+msgstr ""
+
+msgid "Forbidden"
+msgstr ""
+
+msgid "Free"
+msgstr ""
+
+msgid "GBR downlink"
+msgstr ""
+
+msgid "GBR uplink"
+msgstr ""
+
+msgid "Governor"
 msgstr ""
 
 msgid "Hardware acceleration"
 msgstr ""
 
-msgid "Hardware-accelerated NCM is the default. Software processing is also available; switching processing mode requires a reboot. Windows 11, macOS and Linux use their built-in network drivers. Check the applied configuration and exit code after reboot and reconnection."
-msgstr ""
-
-msgid "Hide"
-msgstr ""
-
-msgid "History and reception"
+msgid "Hardware and platform"
 msgstr ""
 
 msgid "Host MAC"
 msgstr ""
 
-msgid "IPv6 (actual kernel addresses)"
+msgid "Hostname"
 msgstr ""
 
-msgid "Identity information"
+msgid "IMEI"
 msgstr ""
 
-msgid "Idle"
+msgid "IMEI Luhn check failed"
+msgstr ""
+
+msgid "IMEI index"
+msgstr ""
+
+msgid "Identity"
 msgstr ""
 
 msgid "Inbox"
@@ -471,79 +320,49 @@ msgstr ""
 msgid "Inbox limit"
 msgstr ""
 
-msgid "Inbox:"
-msgstr ""
-
 msgid "Kernel"
 msgstr ""
 
-msgid "Kernel IPv6 addresses are not available"
+msgid "LTE bands"
 msgstr ""
 
-msgid "LTE anchor with non-standalone NR"
+msgid "Last error"
 msgstr ""
 
-msgid "LTE registration"
+msgid "Leave empty for all bands."
 msgstr ""
 
-msgid "Last apply exit code"
-msgstr ""
-
-msgid "Latest cellular error"
-msgstr ""
-
-msgid "Latest cellular operation"
-msgstr ""
-
-msgid "Latest error"
-msgstr ""
-
-msgid "Leave Recovery and start the OpenWrt main system."
-msgstr ""
-
-msgid "Leave blank to keep the current password"
-msgstr ""
-
-msgid "Local history is not available. Refresh it first."
-msgstr ""
-
-msgid "Local profiles"
-msgstr ""
-
-msgid "Lock"
+msgid "Load average"
 msgstr ""
 
 msgid "Lock cell"
 msgstr ""
 
-msgid "Lock the specified cell"
+msgid "MBR downlink"
+msgstr ""
+
+msgid "MBR uplink"
 msgstr ""
 
 msgid "Manual"
 msgstr ""
 
-msgid "Manufacturer"
-msgstr ""
-
-msgid "Mark as read"
+msgid "Maximum frequency"
 msgstr ""
 
 msgid "Memory"
 msgstr ""
 
-msgid "Message text"
+msgid "Message"
 msgstr ""
 
-msgid "Message text is not available"
+msgid "Minimum frequency"
 msgstr ""
 
-msgid "Message text, up to 402 BMP Unicode characters"
+msgid "Minimum frequency must not exceed maximum frequency."
 msgstr ""
 
-msgid "Messages stored on the SIM"
-msgstr ""
-
-msgid "Mobile network operator"
+msgid "Mobile data"
 msgstr ""
 
 msgid "Mode"
@@ -552,124 +371,55 @@ msgstr ""
 msgid "Model"
 msgstr ""
 
-msgid "Modem and SIM"
-msgstr ""
-
-msgid "Modem confirmed SMS submission; delivery status is not available"
-msgstr ""
-
-msgid "Modem confirmed submission"
+msgid "Modem reset is not supported in this version."
 msgstr ""
 
 msgid "Modem service"
 msgstr ""
 
-msgid "Mounted filesystems"
+msgid "Modem storage"
 msgstr ""
 
-msgid "NCM · hardware acceleration"
+msgid "Mount point"
 msgstr ""
 
-msgid "NCM · software processing"
+msgid "NCM hardware acceleration"
 msgstr ""
 
-msgid "NR registration"
+msgid "NCM software mode"
 msgstr ""
 
-msgid "NSA only"
+msgid "NR bands"
 msgstr ""
 
-msgid "Negotiated downlink rate"
+msgid "Neighbor"
 msgstr ""
 
-msgid "Negotiated rate"
-msgstr ""
-
-msgid "Negotiated uplink rate"
-msgstr ""
-
-msgid "Neighboring cells"
-msgstr ""
-
-msgid "Network management"
+msgid "Network control"
 msgstr ""
 
 msgid "Network mode"
 msgstr ""
 
-msgid "Network type"
-msgstr ""
-
-msgid "New message"
-msgstr ""
-
-msgid "New profile"
+msgid "New template name"
 msgstr ""
 
 msgid "No"
 msgstr ""
 
-msgid "No SIM inserted"
+msgid "No messages selected"
 msgstr ""
 
-msgid "No authentication"
-msgstr ""
-
-msgid "No cells of this type were reported in this sample."
-msgstr ""
-
-msgid "No command history yet."
-msgstr ""
-
-msgid "No matching readback; the transition is not yet confirmed"
-msgstr ""
-
-msgid "No matching received messages."
-msgstr ""
-
-msgid "No matching sent messages."
-msgstr ""
-
-msgid "No profiles yet. Create a new profile."
-msgstr ""
-
-msgid "No response body"
-msgstr ""
-
-msgid "No result was received. Check the latest operation."
-msgstr ""
-
-msgid "No valid device status was received"
+msgid "No pending message"
 msgstr ""
 
 msgid "None"
 msgstr ""
 
-msgid "Not available"
+msgid "Number"
 msgstr ""
 
-msgid "Not connected:"
-msgstr ""
-
-msgid "Not provided by the modem"
-msgstr ""
-
-msgid "Not ready"
-msgstr ""
-
-msgid "Not registered"
-msgstr ""
-
-msgid "Not reported"
-msgstr ""
-
-msgid "Not running"
-msgstr ""
-
-msgid "Not selected; this slot has not been queried"
-msgstr ""
-
-msgid "Number is not available"
+msgid "Off"
 msgstr ""
 
 msgid "On"
@@ -678,280 +428,100 @@ msgstr ""
 msgid "Open network management"
 msgstr ""
 
-msgid "Operation"
+msgid "Operation failed"
 msgstr ""
 
-msgid "Operation ID"
+msgid "Operation timed out; it was not submitted again"
 msgstr ""
 
-msgid "Operation was not queued"
+msgid "Operator"
 msgstr ""
 
-msgid "Outbox"
+msgid "Operators"
 msgstr ""
 
-msgid "Outbox limit"
-msgstr ""
-
-msgid "Outbox:"
+msgid "Overview and network control"
 msgstr ""
 
 msgid "PDP type"
 msgstr ""
 
-msgid "PIN required"
-msgstr ""
-
-msgid "PUK required"
-msgstr ""
-
 msgid "Page cache"
-msgstr ""
-
-msgid "Parts:"
 msgstr ""
 
 msgid "Password"
 msgstr ""
 
-msgid "Password is set"
+msgid "Platform services"
 msgstr ""
 
-msgid "Paused"
-msgstr ""
-
-msgid "Pending request"
-msgstr ""
-
-msgid "Periodic background queries"
-msgstr ""
-
-msgid "Physical slots and the active logical SIM are shown separately. Card presence is not inferred for an unselected slot."
-msgstr ""
-
-msgid "Platform runtime status"
-msgstr ""
-
-msgid "Preparation failed. Check the device status or Recovery."
-msgstr ""
-
-msgid "Preparing reboot"
-msgstr ""
-
-msgid "Preparing upgrade"
-msgstr ""
-
-msgid "Profile deleted, ID"
-msgstr ""
-
-msgid "Profile name"
-msgstr ""
-
-msgid "Profile saved, ID"
-msgstr ""
-
-msgid "Profiles are not available. Read the profiles first."
-msgstr ""
-
-msgid "Query completed with missing fields; check the query errors"
-msgstr ""
-
-msgid "Query failed:"
-msgstr ""
-
-msgid "Queued"
-msgstr ""
-
-msgid "RSSI not reported by the modem (CSQ 99)"
+msgid "Quick command"
 msgstr ""
 
 msgid "Radio"
 msgstr ""
 
-msgid "Radio technology"
-msgstr ""
-
 msgid "Read"
 msgstr ""
 
-msgid "Read APN profiles"
+msgid "Read IMEI"
 msgstr ""
 
-msgid "Read modem and SIM information"
+msgid "Read SIM operator APNs"
 msgstr ""
 
-msgid "Read serving and neighboring cells"
+msgid "Read band and cell locks"
 msgstr ""
 
-msgid "Read-only"
+msgid "Read messages"
 msgstr ""
 
-msgid "Reading"
+msgid "Read only"
 msgstr ""
 
-msgid "Reading SIM slot information in the background."
-msgstr ""
-
-msgid "Reading cell information in the background."
-msgstr ""
-
-msgid "Reading device status…"
-msgstr ""
-
-msgid "Reading supported bands."
-msgstr ""
-
-msgid "Reading the SIM inbox updates unread flags."
-msgstr ""
-
-msgid "Ready"
-msgstr ""
-
-msgid "Reboot"
-msgstr ""
-
-msgid "Reboot completion has not been confirmed. Check the device."
-msgstr ""
-
-msgid "Reboot device"
-msgstr ""
-
-msgid "Reboot into Recovery"
-msgstr ""
-
-msgid "Reboot into main system"
-msgstr ""
-
-msgid "Reboot main system"
-msgstr ""
-
-msgid "Reboot options"
-msgstr ""
-
-msgid "Rebooting…"
-msgstr ""
-
-msgid "Receive directly on this device"
+msgid "Readback"
 msgstr ""
 
 msgid "Recipient number"
 msgstr ""
 
-msgid "Recipient:"
+msgid "Refresh"
 msgstr ""
 
-msgid "Recovery is running. Choose which system to start next."
+msgid "Refresh cells"
 msgstr ""
 
-msgid "Refresh band status"
+msgid "Refresh network information"
 msgstr ""
 
-msgid "Refresh inbox"
+msgid "Register"
 msgstr ""
 
-msgid "Refresh local history"
+msgid "Register manually"
 msgstr ""
 
-msgid "Registered"
-msgstr ""
-
-msgid "Registered, roaming"
-msgstr ""
-
-msgid "Registration status"
-msgstr ""
-
-msgid "Remove band restrictions"
-msgstr ""
-
-msgid "Remove cell restrictions"
-msgstr ""
-
-msgid "Reported bands are distinguished from bands inferred from channel numbers. The same NR channel may belong to n77 or n78; ambiguous bands are not assigned arbitrarily."
-msgstr ""
-
-msgid "Request"
-msgstr ""
-
-msgid "Request queued. Check the status below for the result."
-msgstr ""
-
-msgid "Request queued. Wait for the actual result below."
-msgstr ""
-
-msgid "Request result is not available"
-msgstr ""
-
-msgid "Request was not accepted"
-msgstr ""
-
-msgid "Request was not executed"
-msgstr ""
-
-msgid "Reset submission result is not available"
-msgstr ""
-
-msgid "Resetting configuration"
+msgid "Reserved eraseblocks"
 msgstr ""
 
 msgid "Response"
 msgstr ""
 
-msgid "Restart Recovery"
+msgid "Restart modem"
 msgstr ""
 
-msgid "Restart the Recovery system. The USB management connection will reconnect."
+msgid "Root filesystem"
 msgstr ""
 
-msgid "Restart the main system or boot into Recovery for maintenance."
+msgid "Root marker"
 msgstr ""
 
-msgid "Restore automatic LTE and NR band selection."
+msgid "Running system"
 msgstr ""
 
-msgid "Restore automatic cell selection."
+msgid "Runtime error"
 msgstr ""
 
-msgid "Result"
-msgstr ""
-
-msgid "Retrieved"
-msgstr ""
-
-msgid "Revision"
-msgstr ""
-
-msgid "Root filesystem marker"
-msgstr ""
-
-msgid "Running"
-msgstr ""
-
-msgid "Runtime core status"
-msgstr ""
-
-msgid "Runtime modem status"
-msgstr ""
-
-msgid "Runtime read error"
-msgstr ""
-
-msgid "SA only"
-msgstr ""
-
-msgid "SIM and data connection"
-msgstr ""
-
-msgid "SIM archive"
-msgstr ""
-
-msgid "SIM messages"
-msgstr ""
-
-msgid "SIM query error"
-msgstr ""
-
-msgid "SIM slots"
+msgid "SIM slot"
 msgstr ""
 
 msgid "SIM status"
@@ -960,205 +530,124 @@ msgstr ""
 msgid "SMS management"
 msgstr ""
 
-msgid "SMS settings"
+msgid "SY108"
 msgstr ""
 
-msgid "SMS text is limited to 402 characters (six parts)"
+msgid "Save as template"
 msgstr ""
 
-msgid "SMS text must contain nonempty BMP Unicode text"
+msgid "Saved template"
 msgstr ""
 
-msgid "SMS text must use BMP Unicode characters"
+msgid "Scan operators"
 msgstr ""
 
-msgid "Save SMS settings"
+msgid "Searching for network"
 msgstr ""
 
-msgid "Save automatic connection and roaming preferences."
+msgid "Select"
 msgstr ""
 
-msgid "Save connection policy"
+msgid "Select a template"
 msgstr ""
 
-msgid "Save profile"
-msgstr ""
-
-msgid "Search messages"
-msgstr ""
-
-msgid "Search number or message text"
-msgstr ""
-
-msgid "Select a profile"
-msgstr ""
-
-msgid "Select a profile manually"
-msgstr ""
-
-msgid "Selected automatically by the carrier"
-msgstr ""
-
-msgid "Selected by the network"
-msgstr ""
-
-msgid "Selected profile"
+msgid "Select message"
 msgstr ""
 
 msgid "Send"
 msgstr ""
 
-msgid "Send SMS"
+msgid "Send message"
 msgstr ""
 
-msgid "Send command"
+msgid "Send result unavailable"
 msgstr ""
 
-msgid "Send receipt is not available"
+msgid "Sending"
 msgstr ""
 
-msgid "Send result is not available"
+msgid "Sensor"
+msgstr ""
+
+msgid "Sensors and clocks"
+msgstr ""
+
+msgid "Sent"
+msgstr ""
+
+msgid "Sent limit"
 msgstr ""
 
 msgid "Serial number"
 msgstr ""
 
-msgid "Serving cells"
+msgid "Serving"
 msgstr ""
 
-msgid "Settings are stored in OpenWrt UCI. Lowering a limit removes the oldest local history. SIM messages and submission receipts are retained."
+msgid "Serving and neighboring cells"
 msgstr ""
 
-msgid "Show"
+msgid "Set the same minimum and maximum for a fixed CPU frequency."
 msgstr ""
 
-msgid "Shutdown preparation"
+msgid "Settings"
 msgstr ""
 
-msgid "Shutdown preparation error"
+msgid "Settings are saved and restored at startup."
 msgstr ""
 
-msgid "Signal"
+msgid "Some messages were not deleted"
 msgstr ""
 
-msgid "Signal strength"
+msgid "Speed"
 msgstr ""
 
-msgid "Slot query failed:"
+msgid "Start another message"
 msgstr ""
 
 msgid "Status"
 msgstr ""
 
-msgid "Status for the current boot is not available"
+msgid "Status uncertain"
 msgstr ""
 
-msgid "Status is not available"
+msgid "Submitted to modem"
 msgstr ""
 
-msgid "Stop waiting"
+msgid "Swap free"
 msgstr ""
 
-msgid "Stop waiting on this page"
+msgid "Swap total"
 msgstr ""
 
-msgid "Stopped waiting on this page. The original send result remains available in the device receipt."
+msgid "System"
 msgstr ""
 
-msgid "Stopping services and waiting for the device. This may take several minutes."
+msgid "Target"
 msgstr ""
 
-msgid "Submission result is not available: %s"
-msgstr ""
-
-msgid "Submission result is uncertain. Check the send receipt."
-msgstr ""
-
-msgid "Submitting"
-msgstr ""
-
-msgid "Submitting SMS, request"
-msgstr ""
-
-msgid "Swap"
-msgstr ""
-
-msgid "Switch SIM slot"
-msgstr ""
-
-msgid "Switch failed"
-msgstr ""
-
-msgid "Switch to \""
-msgstr ""
-
-msgid "Switch to SIM"
-msgstr ""
-
-msgid "Switching between hardware and software processing saves the configuration and reboots the device. Changing ACM alone reconnects USB. Both processing modes use NCM. The ACM console requires authentication."
-msgstr ""
-
-msgid "Switching; the cellular connection is temporarily interrupted"
-msgstr ""
-
-msgid "System monitor"
-msgstr ""
-
-msgid "System status"
+msgid "Technology"
 msgstr ""
 
 msgid "Temperature"
 msgstr ""
 
-msgid "Temperature, DDR and memory"
-msgstr ""
-
-msgid "The current SMS cache is not available. Refresh the inbox."
-msgstr ""
-
-msgid "The device runtime performs a controlled reboot after stopping cellular and NV services."
-msgstr ""
-
-msgid "The inbox limit is 10–150 and the outbox limit is 1–50."
-msgstr ""
-
-msgid "The modem omitted some fields. Available information has been retained."
-msgstr ""
-
-msgid "The modem reported unlisted mask bits"
+msgid "Temperatures"
 msgstr ""
 
 msgid "The modem supplies the IP configuration. Manage the APN and radio settings in UDX710; netifd manages this network interface."
 msgstr ""
 
-msgid "The number must contain 3–15 digits, optionally prefixed with +"
+msgid "Time"
 msgstr ""
 
-msgid "The request result was not received. Check the latest operation."
+msgid "Timeout"
 msgstr ""
 
-msgid "The upgrade result was not received. Check the device or Recovery."
+msgid "Total"
 msgstr ""
 
-msgid "Sending continues on the device. Check its receipt before sending another message."
-msgstr ""
-
-msgid "Time is not available"
-msgstr ""
-
-msgid "Timeout (seconds)"
-msgstr ""
-
-msgid "Total memory"
-msgstr ""
-
-msgid "Transition finished; check the readback in the latest operation"
-msgstr ""
-
-msgid "Turn off cellular radio. The current data connection will be interrupted."
-msgstr ""
-
-msgid "Turn on cellular radio and reconnect according to the connection policy."
+msgid "Type"
 msgstr ""
 
 msgid "UBI volumes"
@@ -1170,22 +659,34 @@ msgstr ""
 msgid "USB configuration"
 msgstr ""
 
-msgid "USB connection"
+msgid "USB configuration failed"
 msgstr ""
 
-msgid "USB management"
+msgid "USB mode"
 msgstr ""
 
-msgid "USB network"
+msgid "USB reconnection timed out"
 msgstr ""
 
-msgid "USB request was not queued"
+msgid "USB status"
 msgstr ""
 
-msgid "Uncertain result"
+msgid "Unchanged"
 msgstr ""
 
-msgid "Switch result is uncertain"
+msgid "Unknown"
+msgstr ""
+
+msgid "Unlock"
+msgstr ""
+
+msgid "Unlock all bands"
+msgstr ""
+
+msgid "Unlock all cells"
+msgstr ""
+
+msgid "Unlocked"
 msgstr ""
 
 msgid "Unread"
@@ -1194,89 +695,38 @@ msgstr ""
 msgid "Unrestricted"
 msgstr ""
 
-msgid "Unsaved settings will be lost after reboot."
-msgstr ""
-
-msgid "Updated"
-msgstr ""
-
-msgid "Updated %d seconds ago;"
-msgstr ""
-
-msgid "Upgrade preparation failed; completion was not reported."
-msgstr ""
-
 msgid "Uptime"
 msgstr ""
 
-msgid "Use LTE networks"
-msgstr ""
-
-msgid "Use NR networks"
+msgid "Use APN"
 msgstr ""
 
 msgid "Use gateway metric"
 msgstr ""
 
-msgid "Use this slot"
+msgid "Use template"
 msgstr ""
 
 msgid "Username"
 msgstr ""
 
-msgid "Waiting for a command."
+msgid "Volume"
 msgstr ""
 
-msgid "Waiting for the device to reconnect."
+msgid "Waiting for"
 msgstr ""
 
-msgid "When editing an existing profile, leave the password blank to retain it. Select \"Clear the existing password\" to remove it. Internet data uses CID 1."
+msgid "Waiting for SIM"
 msgstr ""
 
-msgid "Writable"
+msgid "Waiting for packet attachment"
+msgstr ""
+
+msgid "Waiting for radio"
+msgstr ""
+
+msgid "Write IMEI"
 msgstr ""
 
 msgid "Yes"
-msgstr ""
-
-msgid "[Missing part %d]"
-msgstr ""
-
-msgid "[This message part could not be decoded]"
-msgstr ""
-
-msgid "available /"
-msgstr ""
-
-msgid "bands. A radio technology with no bands selected remains unrestricted. The cellular connection may be interrupted briefly."
-msgstr ""
-
-msgid "messages. Multipart messages are shown as complete messages."
-msgstr ""
-
-msgid "messages. Submission and carrier delivery reports are shown separately."
-msgstr ""
-
-msgid "parts"
-msgstr ""
-
-msgid "parts)"
-msgstr ""
-
-msgid "seconds"
-msgstr ""
-
-msgid "seconds ago;"
-msgstr ""
-
-msgid "Not used in automatic mode"
-msgstr ""
-
-msgid "APN configuration cache is stale."
-msgstr ""
-
-msgid "Reading APN configuration in the background."
-msgstr ""
-
-msgid "Reading APN profiles in the background."
 msgstr ""

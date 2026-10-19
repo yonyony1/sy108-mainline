@@ -20,7 +20,7 @@ struct control {
 	int socket;
 	atomic_bool accepting;
 	bool busy, started;
-	J *job, *arguments;
+	J *job, *arguments, *receipts[32];
 	uint64_t sequence;
 	char broker[33];
 };
@@ -29,6 +29,14 @@ static void stop(int sig)
 {
 	(void)sig;
 	running = 0;
+}
+/* The latest status file is not a receipt store: a second client can replace
+ * it. */
+static void remember(struct control *control, J *row)
+{
+	unsigned index = (unsigned)json_object_get_int64(get(row, "id")) % 32;
+	json_object_put(control->receipts[index]);
+	control->receipts[index] = jclone(row);
 }
 static J *dispatch(struct control *control, J *request)
 {
@@ -41,6 +49,21 @@ static J *dispatch(struct control *control, J *request)
 	J *args = get(request, "arguments");
 	if (controller_validate(op, args) < 0)
 		return NULL;
+	if (!strcmp(op, "operation_status")) {
+		uint64_t id = (uint64_t)json_object_get_int64(get(args, "id"));
+		pthread_mutex_lock(&control->lock);
+		J *row = control->receipts[id % 32], *reply = NULL;
+		if (row && json_object_equal(get(row, "id"), get(args, "id")) &&
+		    text_equal(str(row, "boot_id"), str(args, "boot_id")) &&
+		    text_equal(str(row, "broker_id"), str(args, "broker_id"))) {
+			reply = jclone(row);
+			boolean(reply, "accepted", true);
+		} else
+			errorf(CELL_UNCERTAIN, "Operation receipt expired or service restarted; "
+					       "request was not replayed");
+		pthread_mutex_unlock(&control->lock);
+		return reply;
+	}
 	if (!strcmp(op, "status")) {
 		J *value = read_json(CELL_RUN "/cellular-status.json", 262144);
 		if (!value)
@@ -62,7 +85,10 @@ static J *dispatch(struct control *control, J *request)
 		goto end;
 	}
 	if (control->busy || control->job) {
-		errorf(CELL_SYSTEM, "One cellular operation is already queued or running");
+		reply = json_object_new_object();
+		boolean(reply, "accepted", false);
+		boolean(reply, "busy", true);
+		string(reply, "error", "Another cellular operation is running");
 		goto end;
 	}
 	row = json_object_new_object();
@@ -104,6 +130,7 @@ static J *dispatch(struct control *control, J *request)
 	}
 	if (atomic_json(CELL_RUN "/operation.json", row, false) < 0)
 		goto end;
+	remember(control, row);
 	control->job = json_object_get(row);
 	control->arguments = jclone(args);
 	reply = json_object_new_object();
@@ -227,6 +254,7 @@ static int finish(struct control *control, J *row)
 	int rc = receipt_finish(row);
 	if (!rc)
 		rc = atomic_json(CELL_RUN "/operation.json", row, false);
+	remember(control, row);
 	control->busy = false;
 	pthread_mutex_unlock(&control->lock);
 	return rc;
@@ -242,6 +270,8 @@ static void control_close(struct control *control)
 	}
 	json_object_put(control->job);
 	json_object_put(control->arguments);
+	for (size_t i = 0; i < 32; i++)
+		json_object_put(control->receipts[i]);
 	pthread_mutex_destroy(&control->lock);
 }
 static void failed(struct controller *c, const char *prefix)
@@ -323,6 +353,9 @@ int main(void)
 		if (job) {
 			string(job, "state", "running");
 			real(job, "started_uptime", mono());
+			pthread_mutex_lock(&control.lock);
+			remember(&control, job);
+			pthread_mutex_unlock(&control.lock);
 			int recorded = atomic_json(CELL_RUN "/operation.json", job, false);
 			J *result =
 			    recorded ? NULL : controller_execute(c, str(job, "operation"), args);
@@ -358,6 +391,13 @@ int main(void)
 			if (quiesced || !running)
 				break;
 		}
+		if (!c->transport.poisoned && c->radio_restore_pending && mono() - last >= 10) {
+			if (radio_restore(c, c->restore_radio, c->restore_data) < 0)
+				failed(c, "Radio restoration: ");
+		}
+		if (!c->transport.poisoned && !radio_enabled(c) && mono() - last >= 10 &&
+		    radio_restore(c, false, c->want_data) < 0)
+			failed(c, "Radio-off policy: ");
 		if (!c->transport.poisoned && mono() - last >= 10) {
 			c->background = true;
 			c->background_deferred = false;
@@ -366,7 +406,8 @@ int main(void)
 			c->background = false;
 			last = c->background_deferred ? 0 : mono();
 		}
-		if (c->want_data && !c->data && !c->transport.poisoned && mono() >= next_connect) {
+		if (radio_enabled(c) && !c->radio_restore_pending && c->want_data && !c->data &&
+		    !c->transport.poisoned && mono() >= next_connect) {
 			J *result = controller_connect(c, 10);
 			if (!result) {
 				failed(c, NULL);

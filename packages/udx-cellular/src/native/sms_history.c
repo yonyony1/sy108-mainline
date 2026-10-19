@@ -615,6 +615,57 @@ int ims_refresh(struct controller *c)
 	json_object_object_add(c->status, "ims", row);
 	return 0;
 }
+static J *delete_inbox_message(struct controller *c, J *args)
+{
+	J *data = load();
+	if (!data)
+		return NULL;
+	J *visible = sms_inbox(get(data, "inbox"));
+	json_object_put(data);
+	if (!visible)
+		return NULL;
+	J *ids = NULL;
+	for (size_t i = 0; i < json_object_array_length(visible); i++) {
+		J *row = json_object_array_get_idx(visible, i);
+		if (text_equal(str(row, "id"), str(args, "id"))) {
+			ids = get(row, "part_ids") ? jclone(get(row, "part_ids"))
+						   : json_object_new_array();
+			if (!get(row, "part_ids"))
+				json_object_array_add(ids, json_object_get(get(row, "id")));
+			break;
+		}
+	}
+	json_object_put(visible);
+	if (!ids) {
+		errorf(CELL_INVALID, "SMS history selection no longer exists");
+		return NULL;
+	}
+	J *snapshot = sms_refresh(c);
+	if (!snapshot) {
+		json_object_put(ids);
+		return NULL;
+	}
+	J *rows = get(snapshot, "messages");
+	bool ok = true;
+	for (size_t i = 0; i < json_object_array_length(rows); i++) {
+		J *row = json_object_array_get_idx(rows, i);
+		if (!id_in(ids, str(row, "pdu_sha256")))
+			continue;
+		J *selection = json_object_new_object();
+		json_object_object_add(selection, "index", json_object_get(get(row, "index")));
+		string(selection, "pdu_sha256", str(row, "pdu_sha256"));
+		J *deleted = sms_execute(c, "sms_delete", selection);
+		json_object_put(selection);
+		if (!deleted) {
+			ok = false;
+			break;
+		}
+		json_object_put(deleted);
+	}
+	json_object_put(snapshot);
+	json_object_put(ids);
+	return ok ? history_execute(c, "sms_delete_history", args) : NULL;
+}
 J *sms_execute(struct controller *c, const char *operation, J *args)
 {
 	if (transport_admit(&c->transport) < 0)
@@ -622,6 +673,36 @@ J *sms_execute(struct controller *c, const char *operation, J *args)
 	if (!strcmp(operation, "sms_history") || !strcmp(operation, "sms_settings") ||
 	    !strcmp(operation, "sms_mark_read") || !strcmp(operation, "sms_delete_history"))
 		return history_execute(c, operation, args);
+	if (!strcmp(operation, "sms_delete_batch")) {
+		J *items = get(args, "items"), *out = json_object_new_object(),
+		  *rows = json_object_new_array();
+		bool complete = true;
+		for (size_t i = 0; i < json_object_array_length(items); i++) {
+			J *item = json_object_array_get_idx(items, i),
+			  *row = json_object_new_object();
+			J *result = text_equal(str(item, "folder"), "inbox")
+					? delete_inbox_message(c, item)
+					: sms_execute(c,
+						      get(item, "index") ? "sms_delete"
+									 : "sms_delete_history",
+						      item);
+			json_object_object_add(row, "selection", jclone(item));
+			boolean(row, "deleted", result != NULL);
+			if (!result) {
+				complete = false;
+				string(row, "error", cell_error);
+			}
+			json_object_put(result);
+			json_object_array_add(rows, row);
+			if (c->transport.poisoned) {
+				complete = false;
+				break;
+			}
+		}
+		boolean(out, "complete", complete);
+		json_object_object_add(out, "items", rows);
+		return out;
+	}
 	if (!strcmp(operation, "sms_refresh"))
 		return sms_refresh(c);
 	if (!strcmp(operation, "sms_send")) {

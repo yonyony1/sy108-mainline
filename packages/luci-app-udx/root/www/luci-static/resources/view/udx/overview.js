@@ -1,40 +1,322 @@
 'use strict';
 'require view';
+'require form';
 'require udx';
+
 return view.extend({
-    render : function() {
-        var showIdentity = false;
-        function identity(v) {
-            return v ? (showIdentity ? v : '••••••••' + String(v).slice(-4)) : _("Reading");
+    load : function() {
+        return udx.getStatus();
+    },
+    render : function(initial) {
+        var current = initial.cellular || {}, choices = {
+            auto : [ 'nr_lte', 'sa_nsa' ],
+            sa : [ 'nr_only', 'sa_only' ],
+            nsa : [ 'nr_lte', 'nsa_only' ],
+            lte : [ 'lte_only', 'sa_nsa' ],
+            all : [ 'nr_lte_wcdma_gsm', 'sa_nsa' ]
+        };
+        function selectedMode(c) {
+            return c.mode === 'lte_only'                         ? 'lte'
+                   : c.mode === 'nr_only'                        ? 'sa'
+                   : c.mode === 'nr_lte_wcdma_gsm'               ? 'all'
+                   : (c.nr_capability || {}).mode === 'nsa_only' ? 'nsa'
+                                                                 : 'auto';
         }
-        return udx.live(_("System monitor"), function(d) {
-            var b = d.board || {}, c = udx.state(d.cellular), r = udx.state(d.runtime),
-                m = d.memory || {}, u = d.usb || {}, s = c.data_session || {};
-            var cells = (c.cells || [])
-                            .filter(function(x) {
-                                return x.serving;
-                            })
-                            .sort(function(a, b) {
-                                return a.rat === 'nr' ? -1 : 1;
-                            }),
-                cell = cells[0] || {}, q = c.qos || {};
-            var band = cell.band || ((cell.band_candidates || []).length
-                                         ? cell.band_candidates.join(' / ') + _(" (unconfirmed)")
-                                         : null);
-            return [
-    udx.section(_("Current network"),[
-     E('div',{class:'udx-metrics'},[udx.metric(_("Network type"),udx.radioName(c)),udx.metric(_("Band"),band),udx.metric('ARFCN',cell.arfcn),udx.metric('PCI',cell.pci),udx.metric('RSRP',cell.rsrp,' dBm'),udx.metric('RSRQ',cell.rsrq,' dB'),udx.metric('SINR',cell.sinr,' dB')]),
-     udx.telemetryNote(c,'serving_refresh',d.sample_uptime),
-     E('div',{class:'udx-actions'},[E('a',{class:'cbi-button',href:L.url('admin','udx','baseband')},_("Network management")),E('a',{class:'cbi-button',href:L.url('admin','udx','cellular')},_("Bands and cells"))])
-    ]),
-    E('div',{class:'udx-grid'},[
-     udx.table(_("Modem and SIM"),[[_("Mobile network operator"),(c.operator||{}).name],[_("SIM status"),udx.simState((c.sim||{}).state)],[_("Signal strength"),udx.signalText(c)],['QCI',q.qci],[_("Negotiated downlink rate"),udx.value(q.downlink_kbps===undefined?null:q.downlink_kbps/1000,' Mbps')],[_("Negotiated uplink rate"),udx.value(q.uplink_kbps===undefined?null:q.uplink_kbps/1000,' Mbps')],['IMEI',identity(c.imei)],['ICCID',identity(c.iccid)],[_("Identity information"),E('button',{class:'cbi-button',click:function(){showIdentity=!showIdentity;}},showIdentity?_("Hide"):_("Show"))]]),
-     udx.table(_("System status"),[[_("Device"),b.model],[_("Kernel"),b.kernel],[_("Uptime"),Math.floor(d.sample_uptime),_(" seconds")],[_("Total memory"),udx.mib(m.total)],[_("Available memory"),udx.mib(m.available)],[_("Page cache"),udx.mib(m.cached)]].concat((d.thermal||[]).map(function(t){return [t.name,udx.value(t.temperature_c,' °C')];})))
-    ]),
-    udx.table(_("Connection status"),[['IPv4',s.ipv4],[_("IPv6 (actual kernel addresses)"),udx.networkAddresses(d,'ipv6')],[_("USB network"),u.profile],[_("USB connection"),u.state],[_("Current USB speed"),u.speed],[_("LTE registration"),udx.registration(c.registration)],[_("NR registration"),udx.registration(c.nr_registration)]]),
-    udx.table(_("Platform runtime status"),[[_("Core service"),r.core],[_("Modem service"),r.baseband],[_("CP/NV error"),(r.cpnv_error===0||r.cpnv_error==='0')?_("None"):r.cpnv_error],[_("Runtime read error"),r.available?(r.error||_("None")):(d.runtime||{}).error],[_("Latest cellular error"),c.last_error||_("None")]].concat((d.cpu||[]).map(function(x){return ['CPU '+x.policy,udx.value(x.current_khz===null?null:x.current_khz/1000,' MHz')+' / '+udx.value(x.governor)];}))),
-    E('div',{class:'udx-actions'},[['usb',_("USB management")],['sensors',_("Temperature, DDR and memory")],['boot',_("Boot and storage")]].map(function(x){return E('a',{class:'cbi-button',href:L.url('admin','udx',x[0])},x[1]);}))
-   ];
+        var m = new form.JSONMap({
+            main : {
+                airplane : current.radio_enabled === false ? '1' : '0',
+                data : current.automatic_connect ? '1' : '0',
+                roaming : current.roaming_allowed ? '1' : '0',
+                slot : String(
+                    (current.physical_sim || {}).slot == null ? '' : current.physical_sim.slot),
+                mode : selectedMode(current)
+            }
+        },
+                                 _('Overview and network control'));
+        var s = m.section(form.NamedSection, 'main', 'main', _('Network control'));
+        s.anonymous = true;
+        var airplane = s.option(form.Flag, 'airplane', _('Airplane mode'));
+        var data = s.option(form.Flag, 'data', _('Mobile data'));
+        var roaming = s.option(form.Flag, 'roaming', _('Data roaming'));
+        var slot = s.option(form.ListValue, 'slot', _('SIM slot'));
+        var physical = current.physical_sim || {}, slots = physical.slots || [];
+        var activeSlot = slots.find(function(x) {
+            return x.slot === physical.slot;
+        });
+        slot.readonly = !activeSlot || !activeSlot.switch_supported;
+        slots
+            .filter(function(x) {
+                return x.switch_supported || x.slot === physical.slot;
+            })
+            .forEach(function(x) {
+                slot.value(String(x.slot), 'SIM ' + (x.slot + 1));
+            });
+        if (physical.slot == null)
+            slot.value('', '—');
+        var mode = s.option(form.ListValue, 'mode', _('Network mode'));
+        mode.value('auto', _('5G / 4G automatic (SA + NSA)'));
+        mode.value('sa', _('5G SA only'));
+        mode.value('nsa', _('5G NSA'));
+        mode.value('lte', _('4G LTE only'));
+        mode.value('all', _('5G / 4G / 3G / 2G automatic'));
+        var apply = s.option(form.Button, '_apply', _('Apply network settings'));
+        apply.inputstyle = 'apply';
+        apply.inputtitle = _('Apply');
+        apply.onclick = function() {
+            return udx.notify(function() {
+                return m.parse().then(function() {
+                    var enabled = airplane.formvalue('main') !== '1',
+                        wanted = data.formvalue('main') === '1',
+                        roam = roaming.formvalue('main') === '1';
+                    var target = choices[mode.formvalue('main')],
+                        targetSlot = slot.readonly ? null : Number(slot.formvalue('main'));
+                    if (targetSlot != null && !(current.physical_sim.slots || []).some(function(x) {
+                            return x.slot === targetSlot && x.switch_supported;
+                        }))
+                        throw new Error(_('SIM slot'));
+                    return udx.execute('policy', {automatic_connect : wanted, roaming : roam})
+                        .then(function() {
+                            return udx.execute('radio', {enabled : enabled});
+                        })
+                        .then(function() {
+                            if (targetSlot != null &&
+                                (current.physical_sim || {}).slot !== targetSlot)
+                                return udx.execute('physical_slot', {slot : targetSlot});
+                        })
+                        .then(function() {
+                            if (current.mode !== target[0] ||
+                                (current.nr_capability || {}).mode !== target[1])
+                                return udx.execute('network_configure',
+                                                   {mode : target[0], nr_capability : target[1]});
+                        })
+                        .then(function() {
+                            return udx.execute(wanted && enabled ? 'connect' : 'disconnect',
+                                               wanted && enabled ? {automatic : false} : {});
+                        });
+                });
+            });
+        };
+        var reset = s.option(form.Button, '_restart', _('Restart modem'));
+        reset.inputtitle = _('Restart modem');
+        reset.inputstyle = 'reset';
+        reset.readonly = true;
+        reset.description = _('Modem reset is not supported in this version.');
+        var refresh = s.option(form.Button, '_refresh', _('Refresh network information'));
+        refresh.inputtitle = _('Refresh');
+        refresh.onclick = function() {
+            return udx.notify(function() {
+                return udx.execute('modem_info', {})
+                    .then(function() {
+                        return udx.execute('radio_options', {});
+                    })
+                    .then(function() {
+                        return udx.execute('cells_refresh', {});
+                    });
+            });
+        };
+        function cell(d) {
+            return ((d.cellular || {}).cells || [])
+                       .filter(function(x) {
+                           return x.serving;
+                       })
+                       .sort(function(a) {
+                           return a.rat === 'nr' ? -1 : 1;
+                       })[0] ||
+                   {};
+        }
+        function c(d) {
+            return d.cellular || {};
+        }
+        function qos(d, field) {
+            var n = (c(d).qos || {})[field];
+            return n == null ? null : n / 1000;
+        }
+        var brands = {
+            china_mobile : _('China Mobile'),
+            china_unicom : _('China Unicom'),
+            china_telecom : _('China Telecom'),
+            china_broadnet : _('China Broadnet')
+        };
+        var states = {
+            pdp_active : _('Connected'),
+            idle : _('Disconnected'),
+            uncertain : _('Status uncertain'),
+            waiting_sim : _('Waiting for SIM'),
+            waiting_radio : _('Waiting for radio'),
+            waiting_registration : _('Searching for network'),
+            waiting_attachment : _('Waiting for packet attachment'),
+            connecting : _('Connecting')
+        };
+        var network = udx.table(_('Current network'), [
+            [
+                _('Operator'),
+                function(d) {
+                    var op = c(d).operator || {};
+                    return brands[op.brand] || op.name;
+                }
+            ],
+            [
+                _('SIM status'),
+                function(d) {
+                    return (c(d).sim || {}).state;
+                }
+            ],
+            [
+                _('Active SIM'),
+                function(d) {
+                    var n = (c(d).physical_sim || {}).slot;
+                    return n == null ? null : 'SIM ' + (n + 1);
+                }
+            ],
+            [
+                _('Radio'),
+                function(d) {
+                    return c(d).cfun === 1                    ? _('On')
+                           : [ 0, 4 ].indexOf(c(d).cfun) >= 0 ? _('Off')
+                                                              : null;
+                }
+            ],
+            [
+                _('Data connection'),
+                function(d) {
+                    return states[c(d).state] || c(d).state;
+                }
+            ],
+            [
+                _('Network mode'),
+                function(d) {
+                    return ((c(d).mode_choices || {})[c(d).mode] || {}).label || c(d).mode;
+                }
+            ],
+            [
+                _('Band'),
+                function(d) {
+                    var x = cell(d);
+                    return x.band || x.band_candidates;
+                }
+            ],
+            [
+                'ARFCN',
+                function(d) {
+                    return cell(d).arfcn;
+                }
+            ],
+            [
+                'PCI',
+                function(d) {
+                    return cell(d).pci;
+                }
+            ],
+            [
+                'RSRP',
+                function(d) {
+                    return cell(d).rsrp;
+                },
+                ' dBm'
+            ],
+            [
+                'RSRQ',
+                function(d) {
+                    return cell(d).rsrq;
+                },
+                ' dB'
+            ],
+            [
+                'SINR',
+                function(d) {
+                    return cell(d).sinr;
+                },
+                ' dB'
+            ],
+            [
+                'TAC',
+                function(d) {
+                    return cell(d).tac;
+                }
+            ],
+            [
+                'Cell ID',
+                function(d) {
+                    return cell(d).cell_id;
+                }
+            ],
+            [
+                _('Bandwidth'),
+                function(d) {
+                    return cell(d).bandwidth_mhz;
+                },
+                ' MHz'
+            ],
+            [
+                _('AMBR downlink'),
+                function(d) {
+                    return qos(d, 'ambr_downlink_kbps');
+                },
+                ' Mbps'
+            ],
+            [
+                _('AMBR uplink'),
+                function(d) {
+                    return qos(d, 'ambr_uplink_kbps');
+                },
+                ' Mbps'
+            ],
+            [
+                _('MBR downlink'),
+                function(d) {
+                    return qos(d, 'mbr_downlink_kbps');
+                },
+                ' Mbps'
+            ],
+            [
+                _('MBR uplink'),
+                function(d) {
+                    return qos(d, 'mbr_uplink_kbps');
+                },
+                ' Mbps'
+            ],
+            [
+                _('GBR downlink'),
+                function(d) {
+                    return qos(d, 'gbr_downlink_kbps');
+                },
+                ' Mbps'
+            ],
+            [
+                _('GBR uplink'),
+                function(d) {
+                    return qos(d, 'gbr_uplink_kbps');
+                },
+                ' Mbps'
+            ],
+            [
+                'IPv4',
+                function(d) {
+                    return (c(d).data_session || {}).ipv4;
+                }
+            ],
+            [
+                'IPv6',
+                function(d) {
+                    var a = (d.cellular_kernel || {}).ipv6_global_addresses;
+                    return a && a.map(function(x) {
+                        return x.address || x;
+                    });
+                }
+            ],
+            [
+                _('Last error'),
+                function(d) {
+                    return c(d).last_error || _('None');
+                }
+            ]
+        ]);
+        var error = udx.watch(udx.getStatus, function(d) {
+            current = d.cellular || {};
+            network.update(d);
+        }, initial);
+        return m.render().then(function(node) {
+            return E('div', {}, [ node, error, network.node ]);
         });
     },
     handleSaveApply : null,

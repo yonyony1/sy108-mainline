@@ -171,16 +171,17 @@ J *apn_publish(struct controller *c)
 int apn_configure(struct controller *c)
 {
 	char command[320];
-	snprintf(command, sizeof(command), "AT+CGDCONT=1,\"%s\",\"%s\"", str(c->config, "pdp_type"),
-		 str(c->config, "apn"));
+	J *profile = c->fallback_profile ? c->fallback_profile : c->config;
+	snprintf(command, sizeof(command), "AT+CGDCONT=1,\"%s\",\"%s\"", str(profile, "pdp_type"),
+		 str(profile, "apn"));
 	char *raw = controller_at(c, command, 5);
 	if (!raw)
 		return -1;
 	free(raw);
-	const char *method = str(c->config, "auth_method");
+	const char *method = str(profile, "auth_method");
 	int auth = text_equal(method, "pap") ? 1 : text_equal(method, "chap") ? 2 : 0;
 	snprintf(command, sizeof(command), "AT+CGPCO=0,\"%s\",\"%s\",1,%d",
-		 str(c->config, "username"), str(c->config, "password"), auth);
+		 str(profile, "username"), str(profile, "password"), auth);
 	raw = controller_at(c, command, 5);
 	if (!raw)
 		return -1;
@@ -214,6 +215,10 @@ static int set_config(struct controller *c, J *values)
 }
 static J *apply(struct controller *c, J *values)
 {
+	c->fallback_attempted = false;
+	json_object_put(c->fallback_profile);
+	c->fallback_profile = NULL;
+	json_object_object_del(c->status, "automatic_apn");
 	bool wanted = c->want_data;
 	c->want_data = false;
 	J *disconnected = controller_disconnect(c, false);

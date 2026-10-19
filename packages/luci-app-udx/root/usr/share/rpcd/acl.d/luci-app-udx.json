@@ -8,20 +8,29 @@
      "sms_status",
      "apn_status",
      "sms_history_status",
-     "sms_receipt"
+     "sms_receipt",
+     "frequency_status"
     ],
     "system": [
-     "info"
+     "info",
+     "board"
     ]
-   }
+   },
+   "uci": [
+    "udx-usb"
+   ]
   },
   "write": {
    "ubus": {
     "udx": [
      "cellular",
-     "usb"
+     "usb",
+     "frequency_apply"
     ]
-   }
+   },
+   "uci": [
+    "udx-usb"
+   ]
   }
  }
 }
