@@ -15,12 +15,25 @@ from workspace import PROJECT, OPENWRT, LINUX, IMAGE, docker, run
 
 def checkout(url, commit, destination):
     if destination.exists():
-        subprocess.run(['git', '-C', str(destination), 'cat-file', '-e', commit + '^{commit}'], check=True)
-        return
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(['git', 'init', str(destination)], check=True)
-    subprocess.run(['git', '-C', str(destination), 'remote', 'add', 'origin', url], check=True)
-    subprocess.run(['git', '-C', str(destination), 'fetch', '--depth=1', '--no-tags', 'origin', commit], check=True)
+        # 已存在仓库（CI缓存恢复场景），更新远端地址
+        subprocess.run(['git', '-C', str(destination), 'remote', 'set-url', 'origin', url], check=True)
+        # 优先尝试单点 fetch 指定 commit
+        r = subprocess.run(
+            ['git', '-C', str(destination), 'fetch', 'origin', commit],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        # 单点fetch失败（git版本不支持按sha拉取），回退全量 fetch origin
+        if r.returncode != 0:
+            subprocess.run(['git', '-C', str(destination), 'fetch', 'origin'], check=True)
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(['git', 'init', str(destination)], check=True)
+        subprocess.run(['git', '-C', str(destination), 'remote', 'add', 'origin', url], check=True)
+        subprocess.run(['git', '-C', str(destination), 'fetch', '--no-tags', 'origin'], check=True)
+
+    # 校验commit对象存在，然后detach切到目标commit
+    subprocess.run(['git', '-C', str(destination), 'cat-file', '-e', commit + '^{commit}'], check=True)
     subprocess.run(['git', '-C', str(destination), 'checkout', '--detach', commit], check=True)
 
 
