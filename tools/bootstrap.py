@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-only
-"""Prepare fixed OpenWrt sources, the SY108 target and standard feeds."""
+"""Prepare fixed OpenWrt sources, the SY108 target and packages."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -15,7 +15,7 @@ from workspace import PROJECT, OPENWRT, LINUX, IMAGE, docker, run
 
 
 def checkout(url, commit, destination):
-    # ✅ 新增：如果目录存在，但不是合法git仓库，直接清理重建，防止残留损坏目录
+    # 如果目录存在，但不是合法git仓库，直接清理重建，防止残留损坏目录
     if destination.exists():
         if not (destination / ".git").is_dir():
             print(f"[WARN] {destination} exists but NOT a valid git repo, deleting it")
@@ -30,7 +30,7 @@ def checkout(url, commit, destination):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
-        # 单点fetch失败（git版本不支持按sha拉取），回退全量 fetch origin
+        # 单点fetch失败，回退全量 fetch origin
         if r.returncode != 0:
             subprocess.run(['git', '-C', str(destination), 'fetch', 'origin'], check=True)
     else:
@@ -74,7 +74,7 @@ def main():
     lock = json.loads((PROJECT / 'manifests/openwrt.json').read_text())
     integration = PROJECT / 'integration/openwrt'
 
-    # 计算integration哈希（如果目录不存在，哈希也继续生成）
+    # 计算integration哈希
     digest = hashlib.sha256()
     if integration.exists():
         for path in sorted(integration.rglob('*')):
@@ -95,17 +95,20 @@ def main():
     if head != lock['upstream_commit']:
         raise SystemExit(f'Expected OpenWrt {lock["upstream_commit"]}, found {head}: {tree}')
 
-    # ========== patches 目录容错 ==========
+    # ========== patches 目录：补丁失败仅警告，不中断流程 ==========
     patch_dir = integration / 'patches'
     if patch_dir.is_dir():
         for patch in sorted(patch_dir.glob("*.patch")):
-            applied = subprocess.run(
-                ['git', '-C', str(tree), 'apply', '--reverse', '--check', str(patch)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            ).returncode == 0
-            if not applied:
-                subprocess.run(['git', '-C', str(tree), 'apply', str(patch)], check=True)
+            print(f"[INFO] Applying patch: {patch.name}")
+            ret = subprocess.run(
+                ['git', '-C', str(tree), 'apply', str(patch)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            if ret.returncode != 0:
+                print(f"[WARNING] Patch {patch.name} apply failed, skip this patch")
+                print(ret.stderr)
     else:
         print(f"[WARNING] patches dir missing: {patch_dir}, skip applying patches")
 
@@ -147,7 +150,7 @@ def main():
     #     print(proc.stderr)
     #     raise SystemExit("kernel-source.py (2) failed")
 
-    # ✅ 新增：宿主机侧调试，检查OpenWrt树是否完整
+    # 宿主机侧调试，检查OpenWrt树是否完整
     print("[DEBUG HOST] ===== OpenWrt tree check =====")
     print(f"[DEBUG HOST] OPENWRT path: {tree}")
     print(f"[DEBUG HOST] OPENWRT exists: {tree.exists()}")
@@ -155,25 +158,27 @@ def main():
         print(f"[DEBUG HOST] top-level files: {os.listdir(tree)}")
         print(f"[DEBUG HOST] scripts/feeds exists: {(tree / 'scripts' / 'feeds').exists()}")
 
-    # ✅ 新增：容器内ls调试，确认容器视角目录内容
+    # 容器内ls调试，确认容器视角目录内容
     print("[DEBUG CONTAINER] ===== ls inside docker workdir =====")
     run(['sh', '-c', 'pwd; ls -la; ls -la scripts || echo "scripts dir NOT FOUND in container"'])
 
-    # 原来的feeds update命令
+    # feeds update
     run(['sh', '-c', 'test -e dl || ln -s /downloads dl; ./scripts/feeds update -a'])
 
     # ========== luci-patches 容错 ==========
     luci_patch_dir = integration / 'luci-patches'
     if luci_patch_dir.is_dir():
         for patch in sorted(luci_patch_dir.glob("*.patch")):
-            feed = tree / 'feeds/luci'
-            applied = subprocess.run(
-                ['git', '-C', str(feed), 'apply', '--reverse', '--check', str(patch)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            ).returncode == 0
-            if not applied:
-                subprocess.run(['git', '-C', str(feed), 'apply', str(patch)], check=True)
+            print(f"[INFO] Applying luci patch: {patch.name}")
+            ret = subprocess.run(
+                ['git', '-C', str(tree), 'apply', str(patch)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            if ret.returncode != 0:
+                print(f"[WARNING] luci patch {patch.name} apply failed, skip")
+                print(ret.stderr)
     else:
         print(f"[WARNING] luci-patches dir missing: {luci_patch_dir}, skip luci patches")
 
@@ -184,7 +189,7 @@ def main():
         'kernel_commit': kernel['commit'],
     }
     (tree / '.sy108-integration.json').write_text(json.dumps(expected, indent=2) + '\n')
-    print('Prepared fixed sources and feeds.')
+    print('Prepared fixed OpenWrt feeds & target.')
 
 
 if __name__ == '__main__':
