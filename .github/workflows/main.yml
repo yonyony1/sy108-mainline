@@ -41,7 +41,7 @@ jobs:
         with:
           platforms: arm64
 
-      - name: Prepare git & purge old kernel archive
+      - name: Setup git & purge old kernel archive
         run: |
           git config --global core.autocrlf false
           git config --global core.filemode false
@@ -49,6 +49,7 @@ jobs:
           rm -f ${{ env.BUILD_ROOT }}/dl/linux-*.tar.*
 
       # 缓存：工具链 + dl下载目录，重复运行bootstrap会复用构建树
+      # 修复：** 递归匹配 integration/openwrt 所有子目录变更
       - name: Cache OpenWrt build tree & downloads
         uses: actions/cache@v4
         with:
@@ -56,7 +57,7 @@ jobs:
             ${{ env.BUILD_ROOT }}/dl
             ${{ env.BUILD_ROOT }}/staging_dir
             ${{ env.BUILD_ROOT }}/build_dir
-          key: openwrt-build-${{ hashFiles('manifests/*.json','integration/openwrt/*') }}
+          key: openwrt-build-${{ hashFiles('manifests/*.json','integration/openwrt/**/*') }}
           restore-keys: openwrt-build-
 
       # 1. 初始化构建树：浅拉取锁定提交、打补丁、同步target与packages
@@ -87,12 +88,6 @@ jobs:
           name: recovery-firmware
           path: ${{ env.IMG_RECOVERY }}/*
 
-      # 把 boot.bin 传给下一阶段（uboot编译）
-      - name: Export boot.bin path to env
-        run: |
-          echo "MAIN_BOOT=${{ env.IMG_MAIN }}/boot.bin" >> $GITHUB_ENV
-          echo "RECOVERY_BOOT=${{ env.IMG_RECOVERY }}/boot.bin" >> $GITHUB_ENV
-
   # 独立Job：Docker内编译 uboot-spl + 离线仿真校验
   build-uboot-spl:
     needs: build-openwrt
@@ -107,15 +102,19 @@ jobs:
         with:
           name: main-firmware
           path: out/images/main
-      - uses: actions/download-artifact@v4
+
+      - name: Download recovery boot.bin artifact
+        uses: actions/download-artifact@v4
         with:
           name: recovery-firmware
           path: out/images/recovery
 
+      # ✅ 修改：yourorg -> yonyony1
       - name: Checkout sy108-uboot-spl (独立启动器仓库)
         run: |
-          git clone --depth=1 https://github.com/yourorg/${{ env.UBOOT_REPO }}.git ./${{ env.UBOOT_REPO }}
+          git clone --depth=1 https://github.com/yonyony1/${{ env.UBOOT_REPO }}.git ./${{ env.UBOOT_REPO }}
 
+      # ✅ 核心修复：容器内路径 /work/out/images/main/boot.bin，不再拼接宿主机绝对路径
       - name: Build SPL inside AMD64 Docker + offline simulation
         run: |
           docker run --rm \
@@ -124,11 +123,12 @@ jobs:
             ${{ env.UBOOT_DOCKER_IMG }} \
             bash -c "
               apt update && apt install -y make gcc git qemu-system-aarch64 unicorn-dev;
+              ls -la /work/out/images/main/boot.bin /work/out/images/recovery/boot.bin;
               make -C . offline LABEL=mainline \
                 SPL_IMAGE=/work/original-spl.bin \
                 SML_IMAGE=/work/original-sml.bin \
-                MAIN_CAPSULE=/work/${{ env.IMG_MAIN }}/boot.bin \
-                RECOVERY_CAPSULE=/work/${{ env.IMG_RECOVERY }}/boot.bin
+                MAIN_CAPSULE=/work/out/images/main/boot.bin \
+                RECOVERY_CAPSULE=/work/out/images/recovery/boot.bin
             "
 
       # 导出编译产物+离线验证报告
@@ -151,6 +151,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          overwrite: true
           files: |
             main-firmware/*
             recovery-firmware/*
