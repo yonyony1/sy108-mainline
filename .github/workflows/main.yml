@@ -67,6 +67,11 @@ jobs:
         run: |
           rm -rf ${{ env.OUT_DIR }}
 
+      - name: Auto Refresh Kernel Hash (Fix Checksum Mismatch)
+        run: |
+          python3 tools/build/kernel-source.py
+        working-directory: ${{ env.REPO_MAIN }}
+
       - name: Bootstrap OpenWrt build tree
         run: |
           python3 tools/bootstrap.py
