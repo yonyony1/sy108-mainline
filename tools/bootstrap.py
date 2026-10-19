@@ -51,10 +51,14 @@ def main():
     subprocess.run([sys.executable, str(PROJECT / 'tools/build/kernel-source.py')], check=True)
     lock = json.loads((PROJECT / 'manifests/openwrt.json').read_text())
     integration = PROJECT / 'integration/openwrt'
+
+    # 计算integration哈希（如果目录不存在，哈希也继续生成）
     digest = hashlib.sha256()
-    for path in sorted(integration.rglob('*')):
-        if path.is_file():
-            digest.update(str(path.relative_to(integration)).encode() + b'\0' + path.read_bytes())
+    if integration.exists():
+        for path in sorted(integration.rglob('*')):
+            if path.is_file():
+                digest.update(str(path.relative_to(integration)).encode() + b'\0' + path.read_bytes())
+
     if not a.skip_container:
         subprocess.run(
             docker() + [
@@ -69,18 +73,21 @@ def main():
     if head != lock['upstream_commit']:
         raise SystemExit(f'Expected OpenWrt {lock["upstream_commit"]}, found {head}: {tree}')
 
-    # ========== 自动遍历 patches 目录下所有 .patch ==========
+    # ========== patches 目录容错 ==========
     patch_dir = integration / 'patches'
-    for patch in sorted(patch_dir.glob("*.patch")):
-        applied = subprocess.run(
-            ['git', '-C', str(tree), 'apply', '--reverse', '--check', str(patch)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        ).returncode == 0
-        if not applied:
-            subprocess.run(['git', '-C', str(tree), 'apply', str(patch)], check=True)
+    if patch_dir.is_dir():
+        for patch in sorted(patch_dir.glob("*.patch")):
+            applied = subprocess.run(
+                ['git', '-C', str(tree), 'apply', '--reverse', '--check', str(patch)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            ).returncode == 0
+            if not applied:
+                subprocess.run(['git', '-C', str(tree), 'apply', str(patch)], check=True)
+    else:
+        print(f"[WARNING] patches dir missing: {patch_dir}, skip applying patches")
 
-    # ========== sprd 目录：增加调试 + 容错 ==========
+    # ========== sprd target 调试+容错 ==========
     sprd_src = integration / 'target/linux/sprd'
     sprd_dst = tree / 'target/linux/sprd'
     print(f"[DEBUG] sprd_src = {sprd_src}")
@@ -93,18 +100,34 @@ def main():
     else:
         print(f"[WARNING] sprd source directory missing, skip copy: {sprd_src}")
 
-    (tree / 'feeds.conf').write_text((integration / 'feeds.conf').read_text() + '\nsrc-link sy108 /project/packages\n')
+    # ========== feeds.conf 容错 ==========
+    feeds_conf_src = integration / 'feeds.conf'
+    feeds_conf_dst = tree / 'feeds.conf'
+    if feeds_conf_src.is_file():
+        base_text = feeds_conf_src.read_text(encoding="utf-8")
+        feeds_conf_dst.write_text(base_text + '\nsrc-link sy108 /project/packages\n', encoding="utf-8")
+        print(f"[INFO] Wrote feeds.conf from {feeds_conf_src}")
+    else:
+        print(f"[WARNING] feeds.conf missing: {feeds_conf_src}, skip feeds.conf override")
+
     subprocess.run([sys.executable, str(PROJECT / 'tools/build/kernel-source.py')], check=True)
     run(['sh', '-c', 'test -e dl || ln -s /downloads dl; ./scripts/feeds update -a'])
-    for patch in sorted((integration / 'luci-patches').glob('*.patch')):
-        feed = tree / 'feeds/luci'
-        applied = subprocess.run(
-            ['git', '-C', str(feed), 'apply', '--reverse', '--check', str(patch)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        ).returncode == 0
-        if not applied:
-            subprocess.run(['git', '-C', str(feed), 'apply', str(patch)], check=True)
+
+    # ========== luci-patches 容错 ==========
+    luci_patch_dir = integration / 'luci-patches'
+    if luci_patch_dir.is_dir():
+        for patch in sorted(luci_patch_dir.glob("*.patch")):
+            feed = tree / 'feeds/luci'
+            applied = subprocess.run(
+                ['git', '-C', str(feed), 'apply', '--reverse', '--check', str(patch)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            ).returncode == 0
+            if not applied:
+                subprocess.run(['git', '-C', str(feed), 'apply', str(patch)], check=True)
+    else:
+        print(f"[WARNING] luci-patches dir missing: {luci_patch_dir}, skip luci patches")
+
     run(['./scripts/feeds', 'install', '-a'])
     expected = {
         'upstream_commit': lock['upstream_commit'],
