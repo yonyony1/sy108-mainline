@@ -36,6 +36,18 @@ jobs:
             git python3 python3-dev python3-pip unzip libssl-dev zlib1g-dev \
             libelf-dev libudev-dev wget curl rsync qemu-system-aarch64
 
+      - name: Setup QEMU multi-arch for arm64 docker build
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Prepare git & purge old kernel archive
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.filemode false
+          mkdir -p ${{ env.BUILD_ROOT }}/dl
+          rm -f ${{ env.BUILD_ROOT }}/dl/linux-*.tar.*
+
       # 缓存：工具链 + dl下载目录，重复运行bootstrap会复用构建树
       - name: Cache OpenWrt build tree & downloads
         uses: actions/cache@v4
