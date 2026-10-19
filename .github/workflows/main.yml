@@ -68,6 +68,11 @@ jobs:
           python3 tools/bootstrap.py
           ls -la ${{ env.BUILD_ROOT }}
 
+      - name: Fix scanner group collision (remove sane-backends)
+        run: |
+          cd ${{ env.BUILD_ROOT }}
+          rm -rf feeds/packages/sane-backends
+
       # 2. 串行构建：先main，再recovery，共用同一构建树
       - name: Build MAIN firmware
         run: |
