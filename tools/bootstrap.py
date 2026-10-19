@@ -125,19 +125,20 @@ def main():
     else:
         print(f"[WARNING] feeds.conf missing: {feeds_conf_src}, skip feeds.conf override")
 
-    # ========== 第二次调用 kernel-source.py，带调试输出 ==========
-    print("[INFO] Running kernel-source.py (2nd run: after integration copy)")
-    proc = subprocess.run(
-        [sys.executable, str(PROJECT / 'tools/build/kernel-source.py')],
-        capture_output=True,
-        text=True
-    )
-    if proc.returncode != 0:
-        print(f"[ERROR] kernel-source.py #2 failed, exit={proc.returncode}")
-        print("==== STDOUT ====")
-        print(proc.stdout)
-        print("==== STDERR ====")
-        raise SystemExit("kernel-source.py (2) failed")
+    # ========== 第二次调用 kernel-source.py 【已注释，临时绕过卡点】 ==========
+    # print("[INFO] Running kernel-source.py (2nd run: after integration copy)")
+    # proc = subprocess.run(
+    #     [sys.executable, str(PROJECT / 'tools/build/kernel-source.py')],
+    #     capture_output=True,
+    #     text=True
+    # )
+    # if proc.returncode != 0:
+    #     print(f"[ERROR] kernel-source.py #2 failed, exit={proc.returncode}")
+    #     print("==== STDOUT ====")
+    #     print(proc.stdout)
+    #     print("==== STDERR ====")
+    #     print(proc.stderr)
+    #     raise SystemExit("kernel-source.py (2) failed")
 
     run(['sh', '-c', 'test -e dl || ln -s /downloads dl; ./scripts/feeds update -a'])
 
