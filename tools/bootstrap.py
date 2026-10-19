@@ -69,7 +69,7 @@ def main():
     if head != lock['upstream_commit']:
         raise SystemExit(f'Expected OpenWrt {lock["upstream_commit"]}, found {head}: {tree}')
 
-    # ========== 替换：自动遍历 patches 目录下所有 .patch ==========
+    # ========== 自动遍历 patches 目录下所有 .patch ==========
     patch_dir = integration / 'patches'
     for patch in sorted(patch_dir.glob("*.patch")):
         applied = subprocess.run(
@@ -80,7 +80,19 @@ def main():
         if not applied:
             subprocess.run(['git', '-C', str(tree), 'apply', str(patch)], check=True)
 
-    shutil.copytree(integration / 'target/linux/sprd', tree / 'target/linux/sprd', dirs_exist_ok=True)
+    # ========== sprd 目录：增加调试 + 容错 ==========
+    sprd_src = integration / 'target/linux/sprd'
+    sprd_dst = tree / 'target/linux/sprd'
+    print(f"[DEBUG] sprd_src = {sprd_src}")
+    print(f"[DEBUG] exists = {sprd_src.exists()}, is_dir = {sprd_src.is_dir()}")
+    print(f"[DEBUG] parent path exists = {(integration / 'target/linux').exists()}")
+
+    if sprd_src.is_dir():
+        print("[INFO] Copying sprd target files ...")
+        shutil.copytree(sprd_src, sprd_dst, dirs_exist_ok=True)
+    else:
+        print(f"[WARNING] sprd source directory missing, skip copy: {sprd_src}")
+
     (tree / 'feeds.conf').write_text((integration / 'feeds.conf').read_text() + '\nsrc-link sy108 /project/packages\n')
     subprocess.run([sys.executable, str(PROJECT / 'tools/build/kernel-source.py')], check=True)
     run(['sh', '-c', 'test -e dl || ln -s /downloads dl; ./scripts/feeds update -a'])
