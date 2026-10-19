@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
-      - name: Checkout sy108-mainline (jason-liu-4980)
+      - name: Checkout sy108-mainline (yonyony1)
         uses: actions/checkout@v4
         with:
-          repository: jason-liu-4980/sy108-mainline
+          repository: yonyony1/sy108-mainline
           ref: main
           fetch-depth: 0
 
@@ -96,10 +96,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - name: Checkout sy108-mainline (jason-liu-4980) again
+      - name: Checkout sy108-mainline (yonyony1) again
         uses: actions/checkout@v4
         with:
-          repository: jason-liu-4980/sy108-mainline
+          repository: yonyony1/sy108-mainline
           ref: main
           fetch-depth: 0
 
