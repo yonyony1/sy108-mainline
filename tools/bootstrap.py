@@ -68,10 +68,10 @@ def main():
     head = subprocess.check_output(['git', '-C', str(tree), 'rev-parse', 'HEAD'], text=True).strip()
     if head != lock['upstream_commit']:
         raise SystemExit(f'Expected OpenWrt {lock["upstream_commit"]}, found {head}: {tree}')
-    for name in (integration / 'series').read_text().splitlines():
-        if not name or name.startswith('#'):
-            continue
-        patch = integration / 'patches' / name
+
+    # ========== 替换：自动遍历 patches 目录下所有 .patch ==========
+    patch_dir = integration / 'patches'
+    for patch in sorted(patch_dir.glob("*.patch")):
         applied = subprocess.run(
             ['git', '-C', str(tree), 'apply', '--reverse', '--check', str(patch)],
             stdout=subprocess.DEVNULL,
@@ -79,6 +79,7 @@ def main():
         ).returncode == 0
         if not applied:
             subprocess.run(['git', '-C', str(tree), 'apply', str(patch)], check=True)
+
     shutil.copytree(integration / 'target/linux/sprd', tree / 'target/linux/sprd', dirs_exist_ok=True)
     (tree / 'feeds.conf').write_text((integration / 'feeds.conf').read_text() + '\nsrc-link sy108 /project/packages\n')
     subprocess.run([sys.executable, str(PROJECT / 'tools/build/kernel-source.py')], check=True)
