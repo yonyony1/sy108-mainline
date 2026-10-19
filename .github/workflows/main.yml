@@ -19,9 +19,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
-      - name: Checkout main repo
+      - name: Checkout sy108-mainline (jason-liu-4980)
         uses: actions/checkout@v4
         with:
+          repository: jason-liu-4980/sy108-mainline
+          ref: main
           fetch-depth: 0
 
       - name: Free up runner disk space
@@ -94,8 +96,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - name: Checkout main repo again
+      - name: Checkout sy108-mainline (jason-liu-4980) again
         uses: actions/checkout@v4
+        with:
+          repository: jason-liu-4980/sy108-mainline
+          ref: main
+          fetch-depth: 0
 
       - name: Download main/recovery boot.bin artifact
         uses: actions/download-artifact@v4
