@@ -8,12 +8,19 @@ import json
 import shutil
 import subprocess
 import sys
+import os
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
 from workspace import PROJECT, OPENWRT, LINUX, IMAGE, docker, run
 
 
 def checkout(url, commit, destination):
+    # ✅ 新增：如果目录存在，但不是合法git仓库，直接清理重建，防止残留损坏目录
+    if destination.exists():
+        if not (destination / ".git").is_dir():
+            print(f"[WARN] {destination} exists but NOT a valid git repo, deleting it")
+            shutil.rmtree(destination)
+
     if destination.exists():
         # 已存在仓库（CI缓存恢复场景），更新远端地址
         subprocess.run(['git', '-C', str(destination), 'remote', 'set-url', 'origin', url], check=True)
@@ -140,6 +147,19 @@ def main():
     #     print(proc.stderr)
     #     raise SystemExit("kernel-source.py (2) failed")
 
+    # ✅ 新增：宿主机侧调试，检查OpenWrt树是否完整
+    print("[DEBUG HOST] ===== OpenWrt tree check =====")
+    print(f"[DEBUG HOST] OPENWRT path: {tree}")
+    print(f"[DEBUG HOST] OPENWRT exists: {tree.exists()}")
+    if tree.exists():
+        print(f"[DEBUG HOST] top-level files: {os.listdir(tree)}")
+        print(f"[DEBUG HOST] scripts/feeds exists: {(tree / 'scripts' / 'feeds').exists()}")
+
+    # ✅ 新增：容器内ls调试，确认容器视角目录内容
+    print("[DEBUG CONTAINER] ===== ls inside docker workdir =====")
+    run(['sh', '-c', 'pwd; ls -la; ls -la scripts || echo "scripts dir NOT FOUND in container"'])
+
+    # 原来的feeds update命令
     run(['sh', '-c', 'test -e dl || ln -s /downloads dl; ./scripts/feeds update -a'])
 
     # ========== luci-patches 容错 ==========
