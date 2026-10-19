@@ -71,11 +71,11 @@ jobs:
       # 2. 串行构建：先main，再recovery，共用同一构建树
       - name: Build MAIN firmware
         run: |
-          python3 firmware.py main
+          python3 tools/build/firmware.py main
 
       - name: Build RECOVERY firmware (serial run, share build tree)
         run: |
-          python3 firmware.py recovery
+          python3 tools/build/firmware.py  recovery
 
       # 上传固件产物
       - name: Upload main firmware images
