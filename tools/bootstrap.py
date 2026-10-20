@@ -162,11 +162,13 @@ def main():
     print("[DEBUG CONTAINER] ===== ls inside docker workdir =====")
     run(['sh', '-c', 'pwd; ls -la; ls -la scripts || echo "scripts dir NOT FOUND in container"'])
 
-    # ========== feeds update：容器内先删除冲突包再更新 ==========
+    # ========== feeds update + sed 修改 GROUP，解决 scanner 冲突 ==========
     run(['sh', '-c', '''
         test -e dl || ln -s /downloads dl;
-        rm -rf feeds/packages/sane-backends;
-        ./scripts/feeds update -a
+        ./scripts/feeds update -a;
+        if [ -f feeds/packages/utils/sane-backends/Makefile ]; then
+            sed -i 's/GROUP:=scanner/GROUP:=sane-scanner/g' feeds/packages/utils/sane-backends/Makefile
+        fi
     '''])
 
     # ========== luci-patches 容错 ==========
