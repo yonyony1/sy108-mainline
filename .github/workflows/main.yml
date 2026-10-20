@@ -51,7 +51,6 @@ jobs:
           rm -f ${{ env.BUILD_ROOT }}/dl/linux-*.tar.*
 
       # 缓存：工具链 + dl下载目录，重复运行bootstrap会复用构建树
-      # 修复：** 递归匹配 integration/openwrt 所有子目录变更
       - name: Cache OpenWrt build tree & downloads
         uses: actions/cache@v4
         with:
@@ -62,16 +61,19 @@ jobs:
           key: openwrt-build-${{ hashFiles('manifests/*.json','integration/openwrt/**/*') }}
           restore-keys: openwrt-build-
 
-      # 1. 初始化构建树：浅拉取锁定提交、打补丁、同步target与packages
+      # 1. 初始化构建树
       - name: Run bootstrap.py (init build tree)
         run: |
           python3 tools/bootstrap.py
           ls -la ${{ env.BUILD_ROOT }}
 
-      - name: Fix scanner group collision (remove sane-backends)
+      # 删除冲突包并重新刷新feeds元数据，解决scanner group冲突
+      - name: Fix scanner group collision
         run: |
           cd ${{ env.BUILD_ROOT }}
           rm -rf feeds/packages/sane-backends
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
 
       # 2. 串行构建：先main，再recovery，共用同一构建树
       - name: Build MAIN firmware
@@ -80,7 +82,7 @@ jobs:
 
       - name: Build RECOVERY firmware (serial run, share build tree)
         run: |
-          python3 tools/build/firmware.py  recovery
+          python3 tools/build/firmware.py recovery
 
       # 上传固件产物
       - name: Upload main firmware images
@@ -120,12 +122,10 @@ jobs:
           name: recovery-firmware
           path: out/images/recovery
 
-      # ✅ 修改：yourorg -> yonyony1
       - name: Checkout sy108-uboot-spl (独立启动器仓库)
         run: |
           git clone --depth=1 https://github.com/yonyony1/${{ env.UBOOT_REPO }}.git ./${{ env.UBOOT_REPO }}
 
-      # ✅ 核心修复：容器内路径 /work/out/images/main/boot.bin，不再拼接宿主机绝对路径
       - name: Build SPL inside AMD64 Docker + offline simulation
         run: |
           docker run --rm \
@@ -142,7 +142,6 @@ jobs:
                 RECOVERY_CAPSULE=/work/out/images/recovery/boot.bin
             "
 
-      # 导出编译产物+离线验证报告
       - name: Archive uboot.bin & offline report
         uses: actions/upload-artifact@v4
         with:
