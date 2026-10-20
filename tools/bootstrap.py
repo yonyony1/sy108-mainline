@@ -162,8 +162,12 @@ def main():
     print("[DEBUG CONTAINER] ===== ls inside docker workdir =====")
     run(['sh', '-c', 'pwd; ls -la; ls -la scripts || echo "scripts dir NOT FOUND in container"'])
 
-    # feeds update
-    run(['sh', '-c', 'test -e dl || ln -s /downloads dl; ./scripts/feeds update -a'])
+    # ========== feeds update：容器内先删除冲突包再更新 ==========
+    run(['sh', '-c', '''
+        test -e dl || ln -s /downloads dl;
+        rm -rf feeds/packages/sane-backends;
+        ./scripts/feeds update -a
+    '''])
 
     # ========== luci-patches 容错 ==========
     luci_patch_dir = integration / 'luci-patches'
