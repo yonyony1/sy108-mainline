@@ -1,160 +1,70 @@
-name: Build SY108 Firmware
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+name: Build SY108 OpenWrt Firmware
 
-env:
-  WORKSPACE: ${{ github.workspace }}
-  BUILD_ROOT: ${{ github.workspace }}/out/openwrt-build
-  IMG_MAIN: ${{ github.workspace }}/out/images/main
-  IMG_RECOVERY: ${{ github.workspace }}/out/images/recovery
-  UBOOT_REPO: sy108-uboot-spl
-  UBOOT_DOCKER_IMG: ubuntu:24.04
+on:
+  workflow_dispatch:  # 允许手动触发
+  push:
+    branches: [ main ]  # 推送到 main 分支时触发（可按需修改）
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
 
 jobs:
-  build-openwrt:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 240
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 根据编译时长调整
+
     steps:
-      - name: Checkout sy108-mainline (yonyony1)
+      - name: Checkout sy108-mainline
         uses: actions/checkout@v4
-        with:
-          repository: yonyony1/sy108-mainline
-          ref: main
-          fetch-depth: 0
 
-      - name: Free up runner disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
-          df -h
-
-      - name: Install OpenWrt build dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y build-essential libncurses-dev gawk flex bison \
-            git python3 python3-dev python3-pip unzip libssl-dev zlib1g-dev \
-            libelf-dev libudev-dev wget curl rsync qemu-system-aarch64
-
-      - name: Setup QEMU multi-arch for arm64 docker build
+      # 设置 QEMU，以便在 x86_64 runner 上运行 linux/arm64 容器
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
 
-      - name: Setup git & purge old kernel archive
+      - name: Verify Python version
         run: |
-          git config --global core.autocrlf false
-          git config --global core.filemode false
-          mkdir -p ${{ env.BUILD_ROOT }}/dl
-          rm -f ${{ env.BUILD_ROOT }}/dl/linux-*.tar.*
+          python3 --version
+          # README 要求 Python 3.12+，如果系统版本不够，考虑安装
+          # 目前 ubuntu-latest 通常已满足
 
-      # 缓存：工具链 + dl下载目录，重复运行bootstrap会复用构建树
-      - name: Cache OpenWrt build tree & downloads
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.BUILD_ROOT }}/dl
-            ${{ env.BUILD_ROOT }}/staging_dir
-            ${{ env.BUILD_ROOT }}/build_dir
-          key: openwrt-build-${{ hashFiles('manifests/*.json','integration/openwrt/**/*') }}
-          restore-keys: openwrt-build-
-
-      # 1. 初始化构建树
-      - name: Run bootstrap.py (init build tree)
+      - name: Run bootstrap
         run: |
+          export SY108_PYTHON=$(which python3)
           python3 tools/bootstrap.py
-          ls -la ${{ env.BUILD_ROOT }}
 
-      # 2. 串行构建：先main，再recovery，共用同一构建树
-      - name: Build MAIN firmware
+      - name: Build main firmware
         run: |
+          export SY108_PYTHON=$(which python3)
           python3 tools/build/firmware.py main
 
-      - name: Build RECOVERY firmware (serial run, share build tree)
+      - name: Build recovery firmware
         run: |
+          export SY108_PYTHON=$(which python3)
           python3 tools/build/firmware.py recovery
 
-      # 上传固件产物
-      - name: Upload main firmware images
-        uses: actions/upload-artifact@v4
-        with:
-          name: main-firmware
-          path: ${{ env.IMG_MAIN }}/*
-
-      - name: Upload recovery firmware images
-        uses: actions/upload-artifact@v4
-        with:
-          name: recovery-firmware
-          path: ${{ env.IMG_RECOVERY }}/*
-
-  # 独立Job：Docker内编译 uboot-spl + 离线仿真校验
-  build-uboot-spl:
-    needs: build-openwrt
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    steps:
-      - name: Checkout sy108-mainline (yonyony1) again
-        uses: actions/checkout@v4
-        with:
-          repository: yonyony1/sy108-mainline
-          ref: main
-          fetch-depth: 0
-
-      - name: Download main/recovery boot.bin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: main-firmware
-          path: out/images/main
-
-      - name: Download recovery boot.bin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: recovery-firmware
-          path: out/images/recovery
-
-      - name: Checkout sy108-uboot-spl (独立启动器仓库)
+      - name: List output files
         run: |
-          git clone --depth=1 https://github.com/yonyony1/${{ env.UBOOT_REPO }}.git ./${{ env.UBOOT_REPO }}
+          echo "=== Main images ==="
+          ls -la out/images/main/ || true
+          echo "=== Recovery images ==="
+          ls -la out/images/recovery/ || true
 
-      - name: Build SPL inside AMD64 Docker + offline simulation
-        run: |
-          docker run --rm \
-            -v $PWD:/work \
-            -w /work/${{ env.UBOOT_REPO }} \
-            ${{ env.UBOOT_DOCKER_IMG }} \
-            bash -c "
-              apt update && apt install -y make gcc git qemu-system-aarch64 unicorn-dev;
-              ls -la /work/out/images/main/boot.bin /work/out/images/recovery/boot.bin;
-              make -C . offline LABEL=mainline \
-                SPL_IMAGE=/work/original-spl.bin \
-                SML_IMAGE=/work/original-sml.bin \
-                MAIN_CAPSULE=/work/out/images/main/boot.bin \
-                RECOVERY_CAPSULE=/work/out/images/recovery/boot.bin
-            "
-
-      - name: Archive uboot.bin & offline report
+      - name: Upload main firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: uboot-spl-output
+          name: sy108-openwrt-main
           path: |
-            ${{ env.UBOOT_REPO }}/build/mainline/uboot.bin
-            ${{ env.UBOOT_REPO }}/build/mainline/offline-report.json
+            out/images/main/sysupgrade.bin
+            out/images/main/*
+          if-no-files-found: warn
 
-  # 可选：自动发布Release
-  release-firmware:
-    needs: [build-openwrt, build-uboot-spl]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload recovery firmware artifact
+        uses: actions/upload-artifact@v4
         with:
-          generate_release_notes: true
-          overwrite: true
-          files: |
-            main-firmware/*
-            recovery-firmware/*
-            uboot-spl-output/*
+          name: sy108-openwrt-recovery
+          path: |
+            out/images/recovery/boot.bin
+            out/images/recovery/*
+          if-no-files-found: warn
