@@ -31,9 +31,10 @@ common = [
 ]
 shutil.copyfile(PROJECT / f'configs/openwrt-{a.profile}.config', tree / '.config')
 
-# ========== 修复：先 update/install，再 sed 修复冲突，最后清缓存 ==========
-# 注意顺序：update 会恢复 feeds 源文件，所以 sed 必须放在 install 之后，
-# 且同时修改 feeds/ 源和 package/feeds/ 构建路径，确保最终扫描到的是修复后的文件。
+# ========== 修复：先 update/install，再 sed 修复 USERID 冲突 ==========
+# 实际声明是 USERID:=saned:scanner（sane-backends）和 USERID:=:scanner=47（hardware-support），
+# 不是 GROUP:=scanner。这里把 sane-backends 的组名改为 sane-scanner，
+# 保留 hardware-support 的 scanner=47（板级包，GID 固定）。
 run([
     'sh', '-c',
     '''
@@ -41,34 +42,31 @@ run([
     ./scripts/feeds update -a;
     ./scripts/feeds install -a;
 
-    # 1) 修复 sane-backends：feeds 源 + package/feeds 构建目录 两处都改
+    # 1) sane-backends：USERID:=saned:scanner -> USERID:=saned:sane-scanner
+    #    feeds 源 + package/feeds 构建目录 两处都改
     for f in \
         feeds/packages/utils/sane-backends/Makefile \
         package/feeds/packages/sane-backends/Makefile ; do
         if [ -f "$f" ]; then
             echo "[FIX] patching $f"
-            sed -i 's/GROUP:=scanner/GROUP:=sane-scanner/g' "$f"
+            sed -i 's/USERID:=saned:scanner/USERID:=saned:sane-scanner/' "$f"
         fi
     done
 
-    # 2) 修复 hardware-support（若存在）
-    if [ -f package/system/hardware-support/Makefile ]; then
-        echo "[FIX] patching package/system/hardware-support/Makefile"
-        sed -i 's/GROUP:=scanner/GROUP:=hw-scanner/g' package/system/hardware-support/Makefile
-    fi
+    # 2) hardware-support 保持 USERID:=:scanner=47 不变
+    #    如后续仍冲突，再考虑改这里
 
     # 3) 清理包元数据缓存，强制 make defconfig 重新生成
     rm -f tmp/.config-package.in
-    echo "[FIX] scanner group conflict patched, cache cleared"
+    echo "[FIX] USERID scanner conflict patched, cache cleared"
     '''
 ])
 
-# ========== 诊断：打印 scanner 在关键 Makefile 中的实际写法 ==========
-# 用于确认上面的 sed 正则是否匹配；若 make defconfig 仍报 group 冲突，
-# 查看这一步输出即可定位实际写法（如 GROUP := scanner、变量引用等）。
+# ========== 诊断：只打印 USERID 行，确认 sed 是否生效 ==========
+# 若 make defconfig 仍报组冲突，查看这一步输出即可定位剩余引用。
 run([
     'sh', '-c',
-    'grep -n "scanner" '
+    'grep -n "USERID" '
     'feeds/packages/utils/sane-backends/Makefile '
     'package/feeds/packages/sane-backends/Makefile '
     'package/system/hardware-support/Makefile '
