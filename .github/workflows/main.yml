@@ -1,9 +1,7 @@
 name: Build SY108 OpenWrt Firmware
 
-on:
-  workflow_dispatch:  # 允许手动触发
   push:
-    branches: [ main ]  # 推送到 main 分支时触发（可按需修改）
+    branches: [ main ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -11,23 +9,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 360  # 根据编译时长调整
+    timeout-minutes: 360
 
     steps:
       - name: Checkout sy108-mainline
         uses: actions/checkout@v4
 
-      # 设置 QEMU，以便在 x86_64 runner 上运行 linux/arm64 容器
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
       - name: Verify Python version
         run: |
           python3 --version
-          # README 要求 Python 3.12+，如果系统版本不够，考虑安装
-          # 目前 ubuntu-latest 通常已满足
 
       - name: Run bootstrap
         run: |
