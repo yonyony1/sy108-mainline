@@ -33,7 +33,7 @@ def container(arguments, offline=False, root=False):
         'run',
         '--rm',
         '--platform',
-        'linux/arm64',
+        os.environ.get('SY108_PLATFORM', 'linux/amd64'),
         '--user',
         '0:0' if root else f'{os.getuid()}:{os.getgid()}',
         '--network',
