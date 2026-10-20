@@ -30,6 +30,13 @@ common = [
     f'SY108_BUILD_ID={build_id}',
 ]
 shutil.copyfile(PROJECT / f'configs/openwrt-{a.profile}.config', tree / '.config')
+
+# ========== 新增：同容器内清理冲突包、旧tmp、刷新feeds ==========
+run([
+    'sh', '-c',
+    'rm -rf feeds/packages/sane-backends tmp && ./scripts/feeds update -a && ./scripts/feeds install -a'
+])
+
 run(['make', 'defconfig', *common])
 if a.configure_only:
     raise SystemExit(0)
