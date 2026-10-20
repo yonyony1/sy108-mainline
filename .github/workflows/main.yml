@@ -1,10 +1,7 @@
 name: Build SY108 OpenWrt Firmware
 
-  push:
-    branches: [ main ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
+on:
+  workflow_dispatch:  # 仅手动触发，不随 push 自动运行
 
 jobs:
   build:
