@@ -162,16 +162,21 @@ def main():
     print("[DEBUG CONTAINER] ===== ls inside docker workdir =====")
     run(['sh', '-c', 'pwd; ls -la; ls -la scripts || echo "scripts dir NOT FOUND in container"'])
 
-    # ========== feeds update + sed 修改 GROUP，解决 scanner 冲突 ==========
+    # ========== feeds update + 修复 GROUP scanner 冲突 ==========
     run(['sh', '-c', '''
         test -e dl || ln -s /downloads dl;
         ./scripts/feeds update -a;
+        # 修改主仓库 hardware-support 的 GROUP，避免冲突
+        if [ -f package/system/hardware-support/Makefile ]; then
+            sed -i 's/GROUP:=scanner/GROUP:=hw-scanner/g' package/system/hardware-support/Makefile
+        fi
+        # 修改 sane-backends 的 GROUP，双保险
         if [ -f feeds/packages/utils/sane-backends/Makefile ]; then
             sed -i 's/GROUP:=scanner/GROUP:=sane-scanner/g' feeds/packages/utils/sane-backends/Makefile
         fi
     '''])
 
-    # ========== luci-patches 容错 ==========
+    # ========== luci-patches 容错（已移到 feeds update 之后） ==========
     luci_patch_dir = integration / 'luci-patches'
     if luci_patch_dir.is_dir():
         for patch in sorted(luci_patch_dir.glob("*.patch")):
