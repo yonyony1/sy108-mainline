@@ -84,7 +84,9 @@ def main():
     if not a.skip_container:
         subprocess.run(
             docker() + [
-                'build', '--platform', 'linux/arm64', '-t', IMAGE,
+                'build',
+                '--platform', os.environ.get('SY108_PLATFORM', 'linux/amd64'),
+                '-t', IMAGE,
                 '-f', str(PROJECT / 'containers/Dockerfile'), str(PROJECT / 'containers'),
             ],
             check=True,
@@ -162,38 +164,36 @@ def main():
     print("[DEBUG CONTAINER] ===== ls inside docker workdir =====")
     run(['sh', '-c', 'pwd; ls -la; ls -la scripts || echo "scripts dir NOT FOUND in container"'])
 
-    # ========== feeds update + install + 修复 GROUP scanner 冲突 ==========
-    # 关键顺序：先 update，再 install（让 package/feeds/ 目录生成），最后统一 sed 修复
-    # 同时清理 tmp/.config-package.in，强制 make defconfig 重新生成包元数据
+    # ========== feeds update + install + 修复 USERID 冲突 ==========
+    # 实际声明是 USERID:=...，不是 GROUP:=scanner。
     run(['sh', '-c', '''
         test -e dl || ln -s /downloads dl;
         ./scripts/feeds update -a;
         ./scripts/feeds install -a;
 
-        # 1) 修复 hardware-support（若存在）
-        if [ -f package/system/hardware-support/Makefile ]; then
-            echo "[FIX] patching package/system/hardware-support/Makefile"
-            sed -i 's/GROUP:=scanner/GROUP:=hw-scanner/g' package/system/hardware-support/Makefile
-        fi
-
-        # 2) 修复 sane-backends：feeds 源 + package/feeds 构建目录 两处都改
+        # 1) sane-backends：USERID:=saned:scanner -> USERID:=saned:sane-scanner
         for f in \
             feeds/packages/utils/sane-backends/Makefile \
             package/feeds/packages/sane-backends/Makefile ; do
             if [ -f "$f" ]; then
                 echo "[FIX] patching $f"
-                sed -i 's/GROUP:=scanner/GROUP:=sane-scanner/g' "$f"
+                sed -i 's/USERID:=saned:scanner/USERID:=saned:sane-scanner/' "$f"
             fi
         done
 
-        # 3) 如果 package/feeds 下是符号链接，确认源已修改
-        if [ -L package/feeds/packages/sane-backends/Makefile ]; then
-            echo "[INFO] package/feeds sane-backends is a symlink, source already patched"
-        fi
+        # 2) tvheadend：USERID:=tvheadend:dvb -> USERID:=tvheadend:tvh-dvb
+        for f in \
+            feeds/packages/multimedia/tvheadend/Makefile \
+            package/feeds/packages/tvheadend/Makefile ; do
+            if [ -f "$f" ]; then
+                echo "[FIX] patching $f"
+                sed -i 's/USERID:=tvheadend:dvb/USERID:=tvheadend:tvh-dvb/' "$f"
+            fi
+        done
 
-        # 4) 清理包元数据缓存，强制重新生成
+        # 3) 清理包元数据缓存，强制重新生成
         rm -f tmp/.config-package.in
-        echo "[FIX] scanner group conflict patched, cache cleared"
+        echo "[FIX] USERID conflicts patched, cache cleared"
     '''])
 
     # ========== luci-patches 容错（已移到 feeds update 之后） ==========
