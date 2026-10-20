@@ -31,10 +31,10 @@ common = [
 ]
 shutil.copyfile(PROJECT / f'configs/openwrt-{a.profile}.config', tree / '.config')
 
-# ========== 修复：先 update/install，再 sed 修复 USERID 冲突 ==========
-# 实际声明是 USERID:=saned:scanner（sane-backends）和 USERID:=:scanner=47（hardware-support），
-# 不是 GROUP:=scanner。这里把 sane-backends 的组名改为 sane-scanner，
-# 保留 hardware-support 的 scanner=47（板级包，GID 固定）。
+# ========== 修复：先 update/install，再 sed 修复 USERID 组 ID 冲突 ==========
+# hardware-support 声明了多个标准组 ID（scanner=47, dvb=49 等），
+# 上游 feed 中同名但未指定 GID 的 USERID 会与它冲突。
+# 处理方式：保留 hardware-support 的固定 GID，改上游包的组名。
 run([
     'sh', '-c',
     '''
@@ -43,7 +43,6 @@ run([
     ./scripts/feeds install -a;
 
     # 1) sane-backends：USERID:=saned:scanner -> USERID:=saned:sane-scanner
-    #    feeds 源 + package/feeds 构建目录 两处都改
     for f in \
         feeds/packages/utils/sane-backends/Makefile \
         package/feeds/packages/sane-backends/Makefile ; do
@@ -53,22 +52,33 @@ run([
         fi
     done
 
-    # 2) hardware-support 保持 USERID:=:scanner=47 不变
-    #    如后续仍冲突，再考虑改这里
+    # 2) tvheadend：USERID:=tvheadend:dvb -> USERID:=tvheadend:tvh-dvb
+    for f in \
+        feeds/packages/multimedia/tvheadend/Makefile \
+        package/feeds/packages/tvheadend/Makefile ; do
+        if [ -f "$f" ]; then
+            echo "[FIX] patching $f"
+            sed -i 's/USERID:=tvheadend:dvb/USERID:=tvheadend:tvh-dvb/' "$f"
+        fi
+    done
 
-    # 3) 清理包元数据缓存，强制 make defconfig 重新生成
+    # 3) hardware-support 的固定 GID 保持不动
+    #    scanner=47, dvb=49, audio=29, video=40, render=43, input=41, kvm=34, lp=7, hidraw=48
+
+    # 4) 清理包元数据缓存，强制 make defconfig 重新生成
     rm -f tmp/.config-package.in
-    echo "[FIX] USERID scanner conflict patched, cache cleared"
+    echo "[FIX] USERID group conflict patched, cache cleared"
     '''
 ])
 
-# ========== 诊断：只打印 USERID 行，确认 sed 是否生效 ==========
+# ========== 诊断：打印 USERID 行，确认 sed 是否生效 ==========
 # 若 make defconfig 仍报组冲突，查看这一步输出即可定位剩余引用。
 run([
     'sh', '-c',
     'grep -n "USERID" '
     'feeds/packages/utils/sane-backends/Makefile '
     'package/feeds/packages/sane-backends/Makefile '
+    'package/feeds/packages/tvheadend/Makefile '
     'package/system/hardware-support/Makefile '
     '2>/dev/null || true'
 ])
