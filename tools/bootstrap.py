@@ -162,18 +162,38 @@ def main():
     print("[DEBUG CONTAINER] ===== ls inside docker workdir =====")
     run(['sh', '-c', 'pwd; ls -la; ls -la scripts || echo "scripts dir NOT FOUND in container"'])
 
-    # ========== feeds update + 修复 GROUP scanner 冲突 ==========
+    # ========== feeds update + install + 修复 GROUP scanner 冲突 ==========
+    # 关键顺序：先 update，再 install（让 package/feeds/ 目录生成），最后统一 sed 修复
+    # 同时清理 tmp/.config-package.in，强制 make defconfig 重新生成包元数据
     run(['sh', '-c', '''
         test -e dl || ln -s /downloads dl;
         ./scripts/feeds update -a;
-        # 修改主仓库 hardware-support 的 GROUP，避免冲突
+        ./scripts/feeds install -a;
+
+        # 1) 修复 hardware-support（若存在）
         if [ -f package/system/hardware-support/Makefile ]; then
+            echo "[FIX] patching package/system/hardware-support/Makefile"
             sed -i 's/GROUP:=scanner/GROUP:=hw-scanner/g' package/system/hardware-support/Makefile
         fi
-        # 修改 sane-backends 的 GROUP，双保险
-        if [ -f feeds/packages/utils/sane-backends/Makefile ]; then
-            sed -i 's/GROUP:=scanner/GROUP:=sane-scanner/g' feeds/packages/utils/sane-backends/Makefile
+
+        # 2) 修复 sane-backends：feeds 源 + package/feeds 构建目录 两处都改
+        for f in \
+            feeds/packages/utils/sane-backends/Makefile \
+            package/feeds/packages/sane-backends/Makefile ; do
+            if [ -f "$f" ]; then
+                echo "[FIX] patching $f"
+                sed -i 's/GROUP:=scanner/GROUP:=sane-scanner/g' "$f"
+            fi
+        done
+
+        # 3) 如果 package/feeds 下是符号链接，确认源已修改
+        if [ -L package/feeds/packages/sane-backends/Makefile ]; then
+            echo "[INFO] package/feeds sane-backends is a symlink, source already patched"
         fi
+
+        # 4) 清理包元数据缓存，强制重新生成
+        rm -f tmp/.config-package.in
+        echo "[FIX] scanner group conflict patched, cache cleared"
     '''])
 
     # ========== luci-patches 容错（已移到 feeds update 之后） ==========
@@ -193,7 +213,6 @@ def main():
     else:
         print(f"[WARNING] luci-patches dir missing: {luci_patch_dir}, skip luci patches")
 
-    run(['./scripts/feeds', 'install', '-a'])
     expected = {
         'upstream_commit': lock['upstream_commit'],
         'integration_sha256': digest.hexdigest(),
