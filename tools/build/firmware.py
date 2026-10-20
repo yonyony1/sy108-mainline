@@ -31,10 +31,48 @@ common = [
 ]
 shutil.copyfile(PROJECT / f'configs/openwrt-{a.profile}.config', tree / '.config')
 
-# ========== 新增：同容器内清理冲突包、旧tmp、刷新feeds ==========
+# ========== 修复：先 update/install，再 sed 修复冲突，最后清缓存 ==========
+# 注意顺序：update 会恢复 feeds 源文件，所以 sed 必须放在 install 之后，
+# 且同时修改 feeds/ 源和 package/feeds/ 构建路径，确保最终扫描到的是修复后的文件。
 run([
     'sh', '-c',
-    'rm -rf feeds/packages/sane-backends tmp && ./scripts/feeds update -a && ./scripts/feeds install -a'
+    '''
+    rm -rf tmp;
+    ./scripts/feeds update -a;
+    ./scripts/feeds install -a;
+
+    # 1) 修复 sane-backends：feeds 源 + package/feeds 构建目录 两处都改
+    for f in \
+        feeds/packages/utils/sane-backends/Makefile \
+        package/feeds/packages/sane-backends/Makefile ; do
+        if [ -f "$f" ]; then
+            echo "[FIX] patching $f"
+            sed -i 's/GROUP:=scanner/GROUP:=sane-scanner/g' "$f"
+        fi
+    done
+
+    # 2) 修复 hardware-support（若存在）
+    if [ -f package/system/hardware-support/Makefile ]; then
+        echo "[FIX] patching package/system/hardware-support/Makefile"
+        sed -i 's/GROUP:=scanner/GROUP:=hw-scanner/g' package/system/hardware-support/Makefile
+    fi
+
+    # 3) 清理包元数据缓存，强制 make defconfig 重新生成
+    rm -f tmp/.config-package.in
+    echo "[FIX] scanner group conflict patched, cache cleared"
+    '''
+])
+
+# ========== 诊断：打印 scanner 在关键 Makefile 中的实际写法 ==========
+# 用于确认上面的 sed 正则是否匹配；若 make defconfig 仍报 group 冲突，
+# 查看这一步输出即可定位实际写法（如 GROUP := scanner、变量引用等）。
+run([
+    'sh', '-c',
+    'grep -n "scanner" '
+    'feeds/packages/utils/sane-backends/Makefile '
+    'package/feeds/packages/sane-backends/Makefile '
+    'package/system/hardware-support/Makefile '
+    '2>/dev/null || true'
 ])
 
 run(['make', 'defconfig', *common])
