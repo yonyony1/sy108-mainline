@@ -67,14 +67,6 @@ jobs:
           python3 tools/bootstrap.py
           ls -la ${{ env.BUILD_ROOT }}
 
-      # 删除冲突包并重新刷新feeds元数据，解决scanner group冲突
-      - name: Fix scanner group collision
-        run: |
-          cd ${{ env.BUILD_ROOT }}
-          rm -rf feeds/packages/sane-backends
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
       # 2. 串行构建：先main，再recovery，共用同一构建树
       - name: Build MAIN firmware
         run: |
