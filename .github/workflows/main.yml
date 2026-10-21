@@ -12,6 +12,11 @@ jobs:
       - name: Checkout sy108-mainline
         uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Verify Python version
         run: |
           python3 --version
