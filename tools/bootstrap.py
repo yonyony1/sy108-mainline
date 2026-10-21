@@ -213,6 +213,36 @@ def main():
     else:
         print(f"[WARNING] luci-patches dir missing: {luci_patch_dir}, skip luci patches")
 
+    # ========== procd: runtime inject signal‑only‑running‑instance fix (方案2增强，防重复注入) ==========
+    import re
+    # 删除旧失效补丁文件
+    old_procd_patch = tree / "package/system/procd/patches/990-sy108-signal-only-running-instance.patch"
+    if old_procd_patch.exists():
+        print(f"[INFO] Remove outdated procd patch file: {old_procd_patch}")
+        old_procd_patch.unlink()
+
+    procd_service_c = tree / "package/system/procd/src/service/service.c"
+    if procd_service_c.is_file():
+        src_text = procd_service_c.read_text(encoding="utf-8")
+        # 防重复：已经存在该代码片段直接跳过
+        if "!in->proc.pending || in->proc.pid <= 0" in src_text:
+            print("[INFO] procd pid‑guard code already present, skip inject")
+        else:
+            pat = re.compile(
+                r"(static int\s+service_handle_kill\(struct service_instance \*in, int sig\)\s*\{\s*)",
+                re.MULTILINE
+            )
+            inject_code = r'\1\tif (!in->proc.pending || in->proc.pid <= 0)\n\t\treturn UBUS_STATUS_NOT_FOUND;\n\n'
+            new_src, sub_count = pat.subn(inject_code, src_text, count=1)
+            if sub_count == 1:
+                procd_service_c.write_text(new_src, encoding="utf-8")
+                print("[INFO] Successfully injected procd service_handle_kill pid‑guard fix")
+            else:
+                print("[WARN] Could NOT match service_handle_kill, skip code inject, risk stale pid signal")
+    else:
+        print(f"[WARN] procd service.c not found at {procd_service_c}, skip inject")
+    # ========== end procd fix ==========
+
     expected = {
         'upstream_commit': lock['upstream_commit'],
         'integration_sha256': digest.hexdigest(),
